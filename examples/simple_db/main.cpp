@@ -5,12 +5,14 @@ struct person
     std::string string_field;
     int int_field;
     char char_field;
+    std::array<char, 255> char_arr;
 };
 
 DECLARE_PERSISTENT_OBJECT(person, 
-    string_field, 
+    string_field,
     int_field, 
-    char_field
+    char_field,
+    char_arr
 );
 
 int main(int argc, char *argv[])
