@@ -2,11 +2,16 @@
 
 struct person
 {
-    std::string name;
-    std::string email;
+    std::string string_field;
+    int int_field;
+    char char_field;
 };
 
-DECLARE_PERSISTENT_OBJECT(person, name, email);
+DECLARE_PERSISTENT_OBJECT(person, 
+    string_field, 
+    int_field, 
+    char_field
+);
 
 int main(int argc, char *argv[])
 {
