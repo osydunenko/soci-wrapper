@@ -7,24 +7,25 @@
 
 namespace soci_wrapper {
 
-template<class CPPType>
-std::enable_if_t<
-    std::is_integral_v<CPPType>,
-    std::string_view
-> cpp_to_db_type()
-{
-    static const std::string type = "INTEGER";
-    return {type};
-}
+template<class Type, class S = void>
+struct cpp_to_db_type;
 
 template<class CPPType>
-std::enable_if_t<
-    std::is_same_v<CPPType, std::string>,
-    std::string_view
-> cpp_to_db_type()
+struct cpp_to_db_type<CPPType, std::enable_if_t<std::is_integral_v<CPPType>>>
 {
-    static const std::string type = "VARCHAR";
-    return {type};
-}
+    inline static const std::string db_type = "INTEGER";
+};
+
+template<class CPPType>
+struct cpp_to_db_type<CPPType, std::enable_if_t<std::is_same_v<CPPType, std::string>>>
+{
+    inline static const std::string db_type = "VARCHAR";
+};
+
+template<class Type, size_t N>
+struct cpp_to_db_type<std::array<Type, N>>
+{
+    inline static const std::string db_type = "CHAR(" + std::to_string(N) + ")";
+};
 
 } // namespace soci_wrapper

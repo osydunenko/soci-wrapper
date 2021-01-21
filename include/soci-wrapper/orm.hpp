@@ -128,7 +128,7 @@ private:
             using cpp_type = std::remove_pointer_t<decltype(val.first)>;
 
             std::stringstream str;
-            str << val.second << " " << cpp_to_db_type<cpp_type>();
+            str << val.second << " " << cpp_to_db_type<cpp_type>::db_type;
             m_vec.emplace_back(str.str());
         }
 
