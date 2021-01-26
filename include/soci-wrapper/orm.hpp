@@ -5,13 +5,13 @@
 
 #include <cassert>
 #include <memory>
-#include <type_traits>
-#include <tuple>
 
 #include <boost/preprocessor.hpp>
 
 #include "soci/soci.h"
 #include "types_convertor.hpp"
+#include "configuration.hpp"
+#include "meta_data.hpp"
 
 #ifdef SOCI_WRAPPER_SQLITE
 #include "soci/sqlite3/soci-sqlite3.h"
@@ -37,32 +37,14 @@ void tuple_for_each(const Tuple &tuple, Func &&func)
     }
 }
 
-template<class Type>
-struct type_meta_data
-{
-    using self_type = type_meta_data<Type>;
-
-    using is_declared = std::false_type;
-
-    using tuple_type = std::tuple<void>;
-
-    using tuple_type_pair = std::tuple<std::pair<void, void>>;
-
-    using fields_number = std::integral_constant<size_t, 0>;
-
-    static std::string_view class_name();
-
-    static std::vector<std::string_view> member_names();
-
-    static const tuple_type_pair &types_pair();
-};
-
 } // namespace detail
 
 struct session
 {
     using session_type = soci::session;
+
     using session_ptr_type = std::unique_ptr<session_type>;
+
     using on_error_type = std::function<void(const std::string_view)>;
 
     static session_ptr_type connect(const std::string &conn_string, on_error_type &&on_error = nullptr)
@@ -87,19 +69,27 @@ struct session
 template<class Type>
 struct ddl
 {
+    using self_type = ddl<Type>;
+
+    using type_meta_data = detail::type_meta_data<Type>;
+
+    using fields_type = typename type_meta_data::dsl_fields;
+
+    using configuration_type = configuration<Type>;
+
+    static_assert(type_meta_data::is_declared::value);
+
     static void create_table(session::session_type &session)
     {
-        static_assert(detail::type_meta_data<Type>::is_declared::value);
-
-        assert(detail::type_meta_data<Type>::fields_number::value == 
-            detail::type_meta_data<Type>::member_names().size());
-
+        assert(type_meta_data::fields_number::value == 
+            type_meta_data::member_names().size());
+        
         std::stringstream sql;
-        sql << "CREATE TABLE IF NOT EXISTS \"" << detail::type_meta_data<Type>::class_name() << "\" (";
+        sql << "CREATE TABLE IF NOT EXISTS \"" << type_meta_data::class_name() << "\" (";
 
         std::vector<std::string> fields;
         detail::tuple_for_each(
-            detail::type_meta_data<Type>::types_pair(),
+            type_meta_data::types_pair(),
             format_fields(fields)
         );
 
@@ -113,6 +103,15 @@ struct ddl
         sql << ")";
 
         std::cout << sql.str() << std::endl;
+    }
+
+    template<class ...Expr>
+    static void create_table(session::session_type &session, const Expr &...expr)
+    {
+        [](...){}(
+            (configuration_type::eval(expr), false)...
+        );
+        self_type::create_table(session);
     }
 
 private:
@@ -129,6 +128,32 @@ private:
 
             std::stringstream str;
             str << val.second << " " << cpp_to_db_type<cpp_type>::db_type;
+
+            // process NOT NULL
+            if (self_type::configuration_type::not_null().find(val.second) != 
+                self_type::configuration_type::not_null().end()) {
+                str << " NOT NULL";
+            }
+
+            // process UNIQUE
+            if (self_type::configuration_type::unique().find(val.second) != 
+                self_type::configuration_type::unique().end()) {
+                str << " UNIQUE";
+            }
+
+            // process PRIMARY KEY
+            if (self_type::configuration_type::primary_key().find(val.second) != 
+                self_type::configuration_type::primary_key().end()) {
+                str << " PRIMARY KEY";
+            }
+
+            // foreign key
+            auto fk = self_type::configuration_type::foreign_key().find(val.second);
+            if (fk != self_type::configuration_type::foreign_key().end()) {
+                str << " FOREIGN KEY REFERENCES " << fk->second.first << "(" 
+                    << fk->second.second << ")";
+            }
+
             m_vec.emplace_back(str.str());
         }
 
@@ -137,47 +162,8 @@ private:
     };
 };
 
+template<class Type>
+using fields_query = typename ddl<Type>::fields_type;
+
 } // namespace soci_wrapper
-
-#define EXPAND_MEMBERS_IDX(Z, N, DATA) BOOST_PP_COMMA_IF(N) BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(N, DATA))
-#define EXPAND_MEMBERS(TUPLE) BOOST_PP_REPEAT(BOOST_PP_TUPLE_SIZE(TUPLE), EXPAND_MEMBERS_IDX, TUPLE)
-
-#define EXPAND_MEMBERS_TYPE_IDX(Z, N, DATA) BOOST_PP_COMMA_IF(N) std::decay_t<decltype(BOOST_PP_TUPLE_ELEM(0, DATA)::BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA))>
-#define EXPAND_MEMBERS_TYPE(TUPLE) BOOST_PP_REPEAT(BOOST_PP_SUB(BOOST_PP_TUPLE_SIZE(TUPLE), 1), EXPAND_MEMBERS_TYPE_IDX, TUPLE)
-
-#define EXPAND_MEMBERS_TYPE_PAIR_IDX(Z, N, DATA) BOOST_PP_COMMA_IF(N) std::pair<std::add_pointer_t<std::decay_t<decltype(BOOST_PP_TUPLE_ELEM(0, DATA)::BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA))>>, std::string>
-#define EXPAND_MEMBERS_TYPE_PAIR(TUPLE) BOOST_PP_REPEAT(BOOST_PP_SUB(BOOST_PP_TUPLE_SIZE(TUPLE), 1), EXPAND_MEMBERS_TYPE_PAIR_IDX, TUPLE)
-
-#define EXPAND_MEMBERS_PAIR_ELEM_IDX(Z, N, DATA) BOOST_PP_COMMA_IF(N) std::make_pair<std::add_pointer_t<std::decay_t<decltype(BOOST_PP_TUPLE_ELEM(0, DATA)::BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA))>>, std::string>(nullptr, BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA)))
-#define EXPAND_MEMBERS_PAIR_ELEM(TUPLE) BOOST_PP_REPEAT(BOOST_PP_SUB(BOOST_PP_TUPLE_SIZE(TUPLE), 1), EXPAND_MEMBERS_PAIR_ELEM_IDX, TUPLE)
-
-#define DECLARE_PERSISTENT_OBJECT(...) \
-    namespace soci_wrapper { \
-    namespace detail { \
-        template<> \
-        struct type_meta_data<BOOST_PP_TUPLE_ELEM(0, BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))> \
-        { \
-            using self_type = type_meta_data<BOOST_PP_TUPLE_ELEM(0, BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))>; \
-            using is_declared = std::true_type; \
-            using tuple_type = std::tuple<EXPAND_MEMBERS_TYPE(BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))>; \
-            using tuple_type_pair = std::tuple<EXPAND_MEMBERS_TYPE_PAIR(BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))>; \
-            using fields_number = std::tuple_size<tuple_type>; \
-            static std::string_view class_name() \
-            { \
-                static const std::string class_name = BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(0, BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))); \
-                return class_name; \
-            } \
-            static std::vector<std::string_view> member_names() \
-            { \
-                static const std::vector<std::string> names{EXPAND_MEMBERS(BOOST_PP_TUPLE_POP_FRONT(BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__)))}; \
-                return std::vector<std::string_view>{names.begin(), names.end()}; \
-            } \
-            static const tuple_type_pair &types_pair() \
-            { \
-                static const tuple_type_pair pairs{EXPAND_MEMBERS_PAIR_ELEM(BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))}; \
-                return pairs; \
-            } \
-        }; \
-    } \
-    }
 
