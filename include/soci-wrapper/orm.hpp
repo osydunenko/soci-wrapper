@@ -79,7 +79,7 @@ struct ddl
 
     static_assert(type_meta_data::is_declared::value);
 
-    static void create_table(session::session_type &session)
+    static std::string create_table()
     {
         assert(type_meta_data::fields_number::value == 
             type_meta_data::member_names().size());
@@ -100,18 +100,30 @@ struct ddl
             sql << fields[idx];
         }
 
+        // process pk & fk constrains
+        for (const auto &v : configuration_type::primary_key()) {
+            sql << ",CONSTRAINT pk_" << type_meta_data::class_name() << "_" << v
+                << " PRIMARY KEY (" << v << ")";
+        }
+
+        for (const auto &v : configuration_type::foreign_key()) {
+            sql << ",CONSTRAINT fk_" << type_meta_data::class_name() << "_" << v.first
+                << " FOREIGN KEY (" << v.first << ")" 
+                << " REFERENCES " << v.second.first << "(" << v.second.second << ")";
+        }
+
         sql << ")";
 
-        std::cout << sql.str() << std::endl;
+        return sql.str();
     }
 
     template<class ...Expr>
-    static void create_table(session::session_type &session, const Expr &...expr)
+    static std::string create_table(const Expr &...expr)
     {
         [](...){}(
             (configuration_type::eval(expr), false)...
         );
-        self_type::create_table(session);
+        return self_type::create_table();
     }
 
 private:
@@ -139,19 +151,6 @@ private:
             if (self_type::configuration_type::unique().find(val.second) != 
                 self_type::configuration_type::unique().end()) {
                 str << " UNIQUE";
-            }
-
-            // process PRIMARY KEY
-            if (self_type::configuration_type::primary_key().find(val.second) != 
-                self_type::configuration_type::primary_key().end()) {
-                str << " PRIMARY KEY";
-            }
-
-            // foreign key
-            auto fk = self_type::configuration_type::foreign_key().find(val.second);
-            if (fk != self_type::configuration_type::foreign_key().end()) {
-                str << " FOREIGN KEY REFERENCES " << fk->second.first << "(" 
-                    << fk->second.second << ")";
             }
 
             m_vec.emplace_back(str.str());
