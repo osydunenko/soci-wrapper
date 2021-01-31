@@ -6,6 +6,8 @@
 #include <tuple>
 #include <functional>
 
+#include <boost/preprocessor.hpp>
+
 namespace soci_wrapper {
 namespace detail {
 

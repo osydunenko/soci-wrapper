@@ -11,6 +11,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(SOCI_EMPTY OFF)
 add_subdirectory(3rdParty/soci)
 
+add_subdirectory(3rdParty/range-v3)
+
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
@@ -24,6 +26,7 @@ target_include_directories(
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rdParty/soci/include>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/3rdParty/soci/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/3rdParty/range-v3/include>
         $<INSTALL_INTERFACE:Boost::headers>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
@@ -33,6 +36,7 @@ target_link_libraries(
     INTERFACE
         soci_core
         soci_sqlite3
+        range-v3
 )
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)

@@ -6,7 +6,7 @@
 #include <cassert>
 #include <memory>
 
-#include <boost/preprocessor.hpp>
+#include <range/v3/all.hpp>
 
 #include "soci/soci.h"
 #include "types_convertor.hpp"
@@ -66,6 +66,36 @@ struct session
     }
 };
 
+struct dml
+{
+    template<class Type>
+    static void persist(session::session_type &session, Type &&object)
+    {
+        using decayed_type = std::decay_t<Type>;
+        using type_meta_data = detail::type_meta_data<decayed_type>;
+
+        static_assert(type_meta_data::is_declared::value,
+                "The object being persisted was not declared");
+
+        auto fields = type_meta_data::member_names();
+        std::stringstream sql;
+        sql << "INSERT INTO \"" << type_meta_data::class_name() << "\" ("
+            << (fields | ranges::views::join(',')
+                       | ranges::to<std::string>())
+            << ") VALUES (";
+
+        sql << ")";
+        std::cout << sql.str() << std::endl;
+    }
+
+    template<class Type>
+    static void persist(session::session_type &session, Type *object)
+    {
+        assert(object != nullptr);
+        dml::persist(session, *object);
+    }
+};
+
 template<class Type>
 struct ddl
 {
@@ -79,51 +109,58 @@ struct ddl
 
     static_assert(type_meta_data::is_declared::value);
 
-    static std::string create_table()
+    static void drop_table(session::session_type &session)
     {
-        assert(type_meta_data::fields_number::value == 
-            type_meta_data::member_names().size());
+        std::stringstream sql;
+        sql << "DROP TABLE IF EXISTS \""
+            << self_type::type_meta_data::class_name()
+            << "\"";
+        session << sql.str();
+    }
+
+    static void create_table(session::session_type &session)
+    {
+        assert(self_type::type_meta_data::fields_number::value == 
+            self_type::type_meta_data::member_names().size());
         
         std::stringstream sql;
-        sql << "CREATE TABLE IF NOT EXISTS \"" << type_meta_data::class_name() << "\" (";
+        sql << "CREATE TABLE IF NOT EXISTS \"" 
+            << self_type::type_meta_data::class_name()
+            << "\" (";
 
         std::vector<std::string> fields;
         detail::tuple_for_each(
-            type_meta_data::types_pair(),
+            self_type::type_meta_data::types_pair(),
             format_fields(fields)
         );
 
-        for (size_t idx = 0; idx < fields.size(); ++idx) {
-            if (idx != 0) {
-                sql << ",";
-            }
-            sql << fields[idx];
-        }
+        sql << (fields | ranges::views::join(',') 
+                       | ranges::to<std::string>()) << std::endl;
 
         // process pk & fk constrains
-        for (const auto &v : configuration_type::primary_key()) {
-            sql << ",CONSTRAINT pk_" << type_meta_data::class_name() << "_" << v
+        for (const auto &v : self_type::configuration_type::primary_key()) {
+            sql << ",CONSTRAINT pk_" << self_type::type_meta_data::class_name() << "_" << v
                 << " PRIMARY KEY (" << v << ")";
         }
 
-        for (const auto &v : configuration_type::foreign_key()) {
-            sql << ",CONSTRAINT fk_" << type_meta_data::class_name() << "_" << v.first
+        for (const auto &v : self_type::configuration_type::foreign_key()) {
+            sql << ",CONSTRAINT fk_" << self_type::type_meta_data::class_name() << "_" << v.first
                 << " FOREIGN KEY (" << v.first << ")" 
                 << " REFERENCES " << v.second.first << "(" << v.second.second << ")";
         }
 
         sql << ")";
 
-        return sql.str();
+        session << sql.str();
     }
 
     template<class ...Expr>
-    static std::string create_table(const Expr &...expr)
+    static void create_table(session::session_type &session, const Expr &...expr)
     {
         [](...){}(
-            (configuration_type::eval(expr), false)...
+            (self_type::configuration_type::eval(expr), false)...
         );
-        return self_type::create_table();
+        self_type::create_table(session);
     }
 
 private:
