@@ -30,17 +30,25 @@ int main(int argc, char *argv[])
 {
     soci_wrapper::session::session_ptr_type session = soci_wrapper::session::connect("object.db");
 
-    *session << soci_wrapper::ddl<person>::create_table(
+    soci_wrapper::ddl<person>::create_table(*session,
         soci_wrapper::fields_query<person>::id = soci_wrapper::primary_key_constraint,
         soci_wrapper::fields_query<person>::name = soci_wrapper::not_null_constraint,
         soci_wrapper::fields_query<person>::rate = soci_wrapper::unique_constraint
     );
 
-    *session << soci_wrapper::ddl<account>::create_table(
+    soci_wrapper::ddl<account>::create_table(*session,
         soci_wrapper::fields_query<account>::id = soci_wrapper::foreign_key_constraint<person>(
             soci_wrapper::fields_query<person>::id),
         soci_wrapper::fields_query<account>::account_id = soci_wrapper::unique_constraint
     );
+
+    person p;
+    p.id = 1;
+    p.name = "name";
+    p.surname = "surname";
+    p.rate[0] = 'A';
+
+    soci_wrapper::dml::persist(*session, p);
 
     return 0;
 }
