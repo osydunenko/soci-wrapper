@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <cassert>
+#include <cstddef>
 #include <memory>
 
 #include <range/v3/all.hpp>
@@ -35,6 +36,12 @@ void tuple_for_each(const Tuple &tuple, Func &&func)
     for (size_t idx = 0; idx < size; ++idx) {
         tuple_at(idx, tuple, std::forward<Func>(func), std::make_index_sequence<size>{});
     }
+}
+
+template<class Cont>
+std::string join(const Cont &cont, const std::string &sep = ",")
+{
+    return cont | ranges::views::join(sep) | ranges::to<std::string>();
 }
 
 } // namespace detail
@@ -78,14 +85,26 @@ struct dml
                 "The object being persisted was not declared");
 
         auto fields = type_meta_data::member_names();
-        std::stringstream sql;
-        sql << "INSERT INTO \"" << type_meta_data::class_name() << "\" ("
-            << (fields | ranges::views::join(',')
-                       | ranges::to<std::string>())
-            << ") VALUES (";
+        std::vector<std::string> sql_placeholders;
 
-        sql << ")";
+        std::transform(std::begin(fields), std::end(fields),
+            std::back_inserter(sql_placeholders), 
+            [](auto field){
+                std::stringstream str;
+                str << ":" << field;
+                return str.str();
+            });
+
+        std::stringstream sql;
+        sql << "INSERT INTO " << type_meta_data::class_name() << " ("
+            << detail::join(fields)
+            << ") VALUES ("
+            << detail::join(sql_placeholders)
+            << ")";
+
         std::cout << sql.str() << std::endl;
+
+        session << sql.str(), soci::use(std::forward<Type>(object));
     }
 
     template<class Type>
@@ -112,9 +131,8 @@ struct ddl
     static void drop_table(session::session_type &session)
     {
         std::stringstream sql;
-        sql << "DROP TABLE IF EXISTS \""
-            << self_type::type_meta_data::class_name()
-            << "\"";
+        sql << "DROP TABLE IF EXISTS "
+            << self_type::type_meta_data::class_name();
         session << sql.str();
     }
 
@@ -124,9 +142,9 @@ struct ddl
             self_type::type_meta_data::member_names().size());
         
         std::stringstream sql;
-        sql << "CREATE TABLE IF NOT EXISTS \"" 
+        sql << "CREATE TABLE IF NOT EXISTS " 
             << self_type::type_meta_data::class_name()
-            << "\" (";
+            << " (";
 
         std::vector<std::string> fields;
         detail::tuple_for_each(
@@ -202,4 +220,63 @@ template<class Type>
 using fields_query = typename ddl<Type>::fields_type;
 
 } // namespace soci_wrapper
+
+struct person;
+namespace soci {
+
+template<class Type>
+struct type_conversion<
+    Type,
+    std::enable_if_t<
+        soci_wrapper::detail::type_meta_data<Type>::is_declared::value
+    >
+>
+{
+    using base_type = values;
+
+    using object_type = Type;
+
+    using type_meta_data = soci_wrapper::detail::type_meta_data<object_type>;
+
+    static void from_base(const base_type &v, indicator ind, Type &type)
+    {
+        std::cout << "From Base" << std::endl;
+    }
+
+    static void to_base(const Type &type, base_type &v, indicator &ind)
+    {
+        soci_wrapper::detail::tuple_for_each(
+            type_meta_data::types_pair(),
+            to_base_obj(type, v)
+        );
+
+        ind = soci::i_ok;
+    }
+private:
+    struct to_base_obj
+    {
+        to_base_obj(const Type &obj, base_type &v)
+            : object(obj)
+            , values(v)
+        {
+        }
+
+        template<class T>
+        void operator()(const T &val)
+        {
+            using cpp_type = std::remove_pointer_t<decltype(val.first)>;
+            const size_t field_offset = type_meta_data::field_offset(val.second);
+
+            cpp_type *value = reinterpret_cast<cpp_type *>(
+                reinterpret_cast<size_t>(&object) + field_offset
+            );
+            values.set(val.second, *value);
+        }
+
+        const Type &object;
+        base_type &values;
+    };
+};
+
+} // namespace soci
 

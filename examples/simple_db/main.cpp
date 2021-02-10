@@ -5,7 +5,7 @@ struct person
     int id;
     std::string name;
     std::string surname;
-    std::array<char, 100> rate;
+    char rate;
 };
 
 struct account
@@ -43,12 +43,14 @@ int main(int argc, char *argv[])
     );
 
     person p;
-    p.id = 1;
-    p.name = "name";
-    p.surname = "surname";
-    p.rate[0] = 'A';
+    p.id = 12;
+    p.name = "name1";
+    p.surname = "surname1";
+    p.rate = 'B';
 
-    soci_wrapper::dml::persist(*session, p);
+    const person c_person = p;
+
+    soci_wrapper::dml::persist(*session, c_person);
 
     return 0;
 }
