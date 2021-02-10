@@ -75,44 +75,62 @@ struct session
 
 struct dml
 {
-    template<class Type>
-    static void persist(session::session_type &session, Type &&object)
+    template<class ...Type>
+    static void persist(session::session_type &session, Type &&...objects)
     {
-        using decayed_type = std::decay_t<Type>;
-        using type_meta_data = detail::type_meta_data<decayed_type>;
-
-        static_assert(type_meta_data::is_declared::value,
-                "The object being persisted was not declared");
-
-        auto fields = type_meta_data::member_names();
-        std::vector<std::string> sql_placeholders;
-
-        std::transform(std::begin(fields), std::end(fields),
-            std::back_inserter(sql_placeholders), 
-            [](auto field){
-                std::stringstream str;
-                str << ":" << field;
-                return str.str();
-            });
-
-        std::stringstream sql;
-        sql << "INSERT INTO " << type_meta_data::class_name() << " ("
-            << detail::join(fields)
-            << ") VALUES ("
-            << detail::join(sql_placeholders)
-            << ")";
-
-        std::cout << sql.str() << std::endl;
-
-        session << sql.str(), soci::use(std::forward<Type>(object));
+        detail::tuple_for_each(
+            std::make_tuple(std::forward<Type>(objects)...),
+            handle(session)
+        );
     }
 
-    template<class Type>
-    static void persist(session::session_type &session, Type *object)
+private:
+    struct handle
     {
-        assert(object != nullptr);
-        dml::persist(session, *object);
-    }
+        handle(session::session_type &session)
+            : sql_session(session)
+        {
+        }
+
+        template<class Type>
+        void operator()(Type *object)
+        {
+            assert(object != nullptr);
+            this->operator()(*object);
+        }
+
+        template<class Type>
+        void operator()(Type &&object)
+        {
+            using decayed_type = std::decay_t<Type>;
+            using type_meta_data = detail::type_meta_data<decayed_type>;
+
+            static_assert(type_meta_data::is_declared::value,
+                    "The object being persisted was not declared");
+
+            auto fields = type_meta_data::member_names();
+            std::vector<std::string> sql_placeholders;
+
+            std::transform(std::begin(fields), std::end(fields),
+                std::back_inserter(sql_placeholders), 
+                [](auto field){
+                    std::stringstream str;
+                    str << ":" << field;
+                    return str.str();
+                });
+
+            std::stringstream sql;
+            sql << "INSERT INTO " << type_meta_data::class_name() << " ("
+                << detail::join(fields)
+                << ") VALUES ("
+                << detail::join(sql_placeholders)
+                << ")";
+
+            sql_session << sql.str(), soci::use(std::forward<Type>(object));
+        }
+
+        session::session_type &sql_session;
+    };
 };
 
 template<class Type>
@@ -152,8 +170,7 @@ struct ddl
             format_fields(fields)
         );
 
-        sql << (fields | ranges::views::join(',') 
-                       | ranges::to<std::string>()) << std::endl;
+        sql << detail::join(fields);
 
         // process pk & fk constrains
         for (const auto &v : self_type::configuration_type::primary_key()) {
@@ -221,7 +238,6 @@ using fields_query = typename ddl<Type>::fields_type;
 
 } // namespace soci_wrapper
 
-struct person;
 namespace soci {
 
 template<class Type>

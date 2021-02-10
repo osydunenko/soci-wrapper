@@ -48,9 +48,11 @@ int main(int argc, char *argv[])
     p.surname = "surname1";
     p.rate = 'B';
 
-    const person c_person = p;
+    account a;
+    a.id = p.id;
+    a.account_id = "XXXXX";
 
-    soci_wrapper::dml::persist(*session, c_person);
+    soci_wrapper::dml::persist(*session, p, a);
 
     return 0;
 }
