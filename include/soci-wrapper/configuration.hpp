@@ -3,10 +3,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include <boost/proto/context.hpp>
-#include <boost/proto/matches.hpp>
-
-#include "placeholders.hpp"
+#include "terminals.hpp"
 #include "meta_data.hpp"
 
 namespace soci_wrapper {
@@ -56,17 +53,11 @@ struct primary_key_constraint
 {
 };
 
-struct foreign_key_constraint_base
-{
-    virtual std::string_view reference_table() const = 0;
-    virtual std::string_view reference_column() const = 0;
-};
-
 template<class Type>
-struct foreign_key_constraint: foreign_key_constraint_base
+struct foreign_key_constraint
 {
     static_assert(detail::type_meta_data<Type>::is_declared::value,
-            "The concerned Type is not declared as a persistent type");
+        "The concerned Type is not declared as a persistent type");
 
     const placeholder::index_type index;
 
@@ -76,12 +67,12 @@ struct foreign_key_constraint: foreign_key_constraint_base
     {
     }
     
-    std::string_view reference_table() const override
+    std::string_view reference_table() const
     {
         return detail::type_meta_data<Type>::class_name();
     }
 
-    std::string_view reference_column() const override
+    std::string_view reference_column() const
     {
         return detail::type_meta_data<Type>::member_names()[index];
     }
@@ -90,16 +81,19 @@ struct foreign_key_constraint: foreign_key_constraint_base
 struct configuration_terminals: boost::proto::or_<
     boost::proto::terminal<not_null_constraint>,
     boost::proto::terminal<unique_constraint>,
-    boost::proto::terminal<foreign_key_constraint_base>
+    boost::proto::terminal<primary_key_constraint>,
+    boost::proto::terminal<foreign_key_constraint<boost::proto::_>>
 >
 {
 };
 
-struct configuration_grammar: 
+struct configuration_grammar: boost::proto::or_<
     boost::proto::assign<
         placeholder::terminals,
         configuration_terminals
-    >
+    >,
+    configuration_terminals
+>
 {
 };
 
@@ -135,7 +129,8 @@ struct context: boost::proto::callable_context<const context<Type>>
         return true;
     }
 
-    result_type operator()(boost::proto::tag::terminal, const foreign_key_constraint_base &fk) const
+    template<class X>
+    result_type operator()(boost::proto::tag::terminal, const foreign_key_constraint<X> &fk) const
     {
         configuration_attributes<Type>::foreign_key().emplace(
             std::make_pair(field_name, std::make_pair(fk.reference_table(), fk.reference_column()))
@@ -170,11 +165,14 @@ public:
 
     using foreign_key_container_type = typename config::configuration_attributes<Type>::foreign_key_container_type;
 
+    static_assert(detail::type_meta_data<Type>::is_declared::value,
+        "The concerned Type is not declared as a persistent type");
+
     template<class Expr>
     static void eval(const Expr &expr)
     {
-        // TODO: to check why the follows assert triggers
-        //static_assert(boost::proto::matches<Expr, config::configuration_grammar>::value, "Invalid Grammar");
+        static_assert(boost::proto::matches<Expr, config::configuration_grammar>::value, 
+            "Invalid Configuration Grammar");
         boost::proto::eval(expr, context_type{});
     }
 

@@ -1,75 +1,25 @@
 #pragma once
 
-#include <iostream>
 #include <sstream>
+#include <typeinfo>
 
-#include <cassert>
-#include <cstddef>
-#include <memory>
-
-#include <range/v3/all.hpp>
-
-#include "soci/soci.h"
+#include "session.hpp"
 #include "types_convertor.hpp"
 #include "configuration.hpp"
 #include "meta_data.hpp"
-
-#ifdef SOCI_WRAPPER_SQLITE
-#include "soci/sqlite3/soci-sqlite3.h"
-#endif
+#include "query.hpp"
+#include "detail.hpp"
 
 namespace soci_wrapper {
-namespace detail {
 
-template<class Tuple, class Func, std::size_t ...Idxs>
-void tuple_at(std::size_t idx, const Tuple &tuple, Func &&func, std::index_sequence<Idxs...>)
+struct dql
 {
-    [](...){}(
-        (idx == Idxs && (static_cast<void>(std::forward<Func>(func)(std::get<Idxs>(tuple))), false))...
-    );
-}
-
-template<class Tuple, class Func>
-void tuple_for_each(const Tuple &tuple, Func &&func)
-{
-    constexpr size_t size = std::tuple_size_v<Tuple>;
-    for (size_t idx = 0; idx < size; ++idx) {
-        tuple_at(idx, tuple, std::forward<Func>(func), std::make_index_sequence<size>{});
-    }
-}
-
-template<class Cont>
-std::string join(const Cont &cont, const std::string &sep = ",")
-{
-    return cont | ranges::views::join(sep) | ranges::to<std::string>();
-}
-
-} // namespace detail
-
-struct session
-{
-    using session_type = soci::session;
-
-    using session_ptr_type = std::unique_ptr<session_type>;
-
-    using on_error_type = std::function<void(const std::string_view)>;
-
-    static session_ptr_type connect(const std::string &conn_string, on_error_type &&on_error = nullptr)
+    template<class Type>
+    static query::from<Type> query_from()
     {
-        session_ptr_type session_ptr = std::make_unique<session_type>();
-        try {
-            session_ptr->open(
-#ifdef SOCI_WRAPPER_SQLITE
-                soci::sqlite3,
-#endif
-                conn_string);
-        } catch(const std::exception &ex) {
-            if (on_error) {
-                on_error(ex.what());
-            }
-            return nullptr;
-        }
-        return session_ptr;
+        static_assert(detail::type_meta_data<Type>::is_declared::value,
+            "The concerned Type is not declared as a persistent type");
+        return query::from<Type>();
     }
 };
 
@@ -106,7 +56,7 @@ private:
             using type_meta_data = detail::type_meta_data<decayed_type>;
 
             static_assert(type_meta_data::is_declared::value,
-                    "The object being persisted was not declared");
+                "The object being persisted was not declared");
 
             auto fields = type_meta_data::member_names();
             std::vector<std::string> sql_placeholders;
@@ -144,7 +94,8 @@ struct ddl
 
     using configuration_type = configuration<Type>;
 
-    static_assert(type_meta_data::is_declared::value);
+    static_assert(type_meta_data::is_declared::value,
+        "The concerned Type is not declared as a persistent type");
 
     static void drop_table(session::session_type &session)
     {
@@ -173,14 +124,13 @@ struct ddl
         sql << detail::join(fields);
 
         // process pk & fk constrains
-        for (const auto &v : self_type::configuration_type::primary_key()) {
-            sql << ",CONSTRAINT pk_" << self_type::type_meta_data::class_name() << "_" << v
-                << " PRIMARY KEY (" << v << ")";
+        if (self_type::configuration_type::primary_key().size()) {
+            sql << ", PRIMARY KEY (" << detail::join(self_type::configuration_type::primary_key()) << ")";
         }
 
         for (const auto &v : self_type::configuration_type::foreign_key()) {
-            sql << ",CONSTRAINT fk_" << self_type::type_meta_data::class_name() << "_" << v.first
-                << " FOREIGN KEY (" << v.first << ")" 
+            sql /*<< ",CONSTRAINT fk_" << self_type::type_meta_data::class_name() << "_" << v.first*/
+                << ", FOREIGN KEY (" << v.first << ")" 
                 << " REFERENCES " << v.second.first << "(" << v.second.second << ")";
         }
 
@@ -192,8 +142,9 @@ struct ddl
     template<class ...Expr>
     static void create_table(session::session_type &session, const Expr &...expr)
     {
+        // Processing the configuration grammar
         [](...){}(
-            (self_type::configuration_type::eval(expr), false)...
+            (self_type::configuration_type::eval(expr), true)...
         );
         self_type::create_table(session);
     }
@@ -254,26 +205,28 @@ struct type_conversion<
 
     using type_meta_data = soci_wrapper::detail::type_meta_data<object_type>;
 
-    static void from_base(const base_type &v, indicator ind, Type &type)
-    {
-        std::cout << "From Base" << std::endl;
-    }
-
-    static void to_base(const Type &type, base_type &v, indicator &ind)
+    static void from_base(const base_type &v, indicator ind, Type &object)
     {
         soci_wrapper::detail::tuple_for_each(
             type_meta_data::types_pair(),
-            to_base_obj(type, v)
+            from_base_obj(v, ind, object)
         );
+    }
 
-        ind = soci::i_ok;
+    static void to_base(const Type &object, base_type &v, indicator &ind)
+    {
+        soci_wrapper::detail::tuple_for_each(
+            type_meta_data::types_pair(),
+            to_base_obj(object, v, ind)
+        );
     }
 private:
-    struct to_base_obj
+    struct from_base_obj
     {
-        to_base_obj(const Type &obj, base_type &v)
-            : object(obj)
-            , values(v)
+        from_base_obj(const base_type &v, indicator &i, Type &obj)
+            : values(v)
+            , ind(i)
+            , object(obj)
         {
         }
 
@@ -286,11 +239,44 @@ private:
             cpp_type *value = reinterpret_cast<cpp_type *>(
                 reinterpret_cast<size_t>(&object) + field_offset
             );
-            values.set(val.second, *value);
+
+            using soci_type = soci_wrapper::cpp_to_soci_type_t<cpp_type>;
+            *value = values.get<soci_type>(val.second, soci_type{});
+        }
+
+        const base_type &values;
+        indicator &ind;
+        Type &object;
+    };
+
+    struct to_base_obj
+    {
+        to_base_obj(const Type &obj, base_type &v, indicator &i)
+            : object(obj)
+            , values(v)
+            , ind(i)
+        {
+        }
+
+        template<class T>
+        soci::indicator operator()(const T &val)
+        {
+            using cpp_type = std::remove_pointer_t<decltype(val.first)>;
+            const size_t field_offset = type_meta_data::field_offset(val.second);
+
+            cpp_type *value = reinterpret_cast<cpp_type *>(
+                reinterpret_cast<size_t>(&object) + field_offset
+            );
+
+            const soci::indicator ind = soci_wrapper::to_ind<cpp_type>::get_ind(*value);
+            values.set(val.second, *value, ind);
+
+            return ind;
         }
 
         const Type &object;
         base_type &values;
+        indicator &ind;
     };
 };
 
