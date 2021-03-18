@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(soci_wrapper)
 
-option(SW_BUILD_TESTS "Build tests" ON)
+option(SW_BUILD_TESTS "Build tests" OFF)
 
 add_compile_definitions("$<$<CONFIG:Debug>:DEBUG=1>")
 add_compile_definitions("SOCI_WRAPPER_SQLITE=1")
