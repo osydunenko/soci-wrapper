@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <memory>
 
-#include <range/v3/all.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 namespace soci_wrapper {
 namespace detail {
@@ -29,7 +29,7 @@ void tuple_for_each(const Tuple &tuple, Func &&func)
 template<class Cont>
 std::string join(const Cont &cont, const std::string &sep = ",")
 {
-    return cont | ranges::views::join(sep) | ranges::to<std::string>();
+    return boost::algorithm::join(cont, sep);
 }
 
 } // namespace detail
