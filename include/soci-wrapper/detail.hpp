@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <type_traits>
+#include <vector>
 
 #include <boost/algorithm/string/join.hpp>
 
@@ -26,8 +28,17 @@ void tuple_for_each(const Tuple &tuple, Func &&func)
     }
 }
 
-template<class Cont>
-std::string join(const Cont &cont, const std::string &sep = ",")
+template<template<class ...> class Cont, class T, class ...Args>
+std::enable_if_t<std::is_same_v<std::string_view, T>, std::string>
+join(const Cont<T, Args...> &cont, const std::string &sep = ",")
+{
+    std::vector<std::string> tmp_vec(cont.begin(), cont.end());
+    return boost::algorithm::join(tmp_vec, sep);
+}
+
+template<template<class ...> class Cont, class T, class ...Args>
+std::enable_if_t<std::is_same_v<std::string, T>, std::string>
+join(const Cont<T, Args...> &cont, const std::string &sep = ",")
 {
     return boost::algorithm::join(cont, sep);
 }
