@@ -32,7 +32,9 @@ DECLARE_PERSISTENT_OBJECT(ddl_fk_tbl,
 );
 
 // TODO: to check how sqlite handles primary keys constraints
-/*BOOST_AUTO_TEST_CASE(tst_check_constraints, * utf::depends_on("tst_smooth_data"))
+// Prevent the test for sqlite
+BOOST_AUTO_TEST_CASE(tst_check_constraints, * utf::depends_on("tst_smooth_data") 
+        * utf::enable_if<!SOCI_WRAPPER_SQLITE>())
 {
     ddl_pk_tbl pk{
         .f_pk_id = 24,
@@ -47,7 +49,7 @@ DECLARE_PERSISTENT_OBJECT(ddl_fk_tbl,
     };
 
     BOOST_CHECK_THROW(sw::dml::persist(*session, fk), std::exception);
-}*/
+}
 
 BOOST_AUTO_TEST_CASE(tst_query_data, * utf::depends_on("tst_smooth_data"))
 {
@@ -91,6 +93,5 @@ BOOST_AUTO_TEST_CASE(tst_conn, * utf::enable_if<SOCI_WRAPPER_SQLITE>())
             sw::fields_query<ddl_pk_tbl>::f_pk_id),
         sw::fields_query<ddl_fk_tbl>::f_unique = sw::unique_constraint
     );
-    BOOST_TEST(true);
 }
 

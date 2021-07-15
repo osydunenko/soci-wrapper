@@ -4,6 +4,7 @@
 #include <typeinfo>
 
 #include "session.hpp"
+#include "sessions_pool.hpp"
 #include "types_convertor.hpp"
 #include "configuration.hpp"
 #include "meta_data.hpp"
@@ -188,6 +189,7 @@ template<class Type>
 using fields_query = typename ddl<Type>::fields_type;
 
 } // namespace soci_wrapper
+
 
 namespace soci {
 

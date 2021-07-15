@@ -56,30 +56,30 @@ sw::session::session_ptr_type session;
 BOOST_AUTO_TEST_CASE(tst_data, * utf::depends_on("tst_populate"))
 {
     std::vector<person> data = sw::dql::query_from<person>().objects(*session);
-    BOOST_TEST(data.size() == 255);
+    BOOST_TEST(data.size() == 25);
 
-    for (int idx = 0; idx < 255; ++idx) {
+    for (int idx = 0; idx < 25; ++idx) {
         BOOST_TEST(data[idx].id == idx);
         BOOST_TEST(data[idx].name == "name " + std::to_string(idx));
         BOOST_TEST(data[idx].surname == "surname " + std::to_string(idx));
     }
 
     person prsn{
-        .id = 200,
-        .name = "name 200",
-        .surname = "surname 200"
+        .id = 20,
+        .name = "name 20",
+        .surname = "surname 20"
     };
 
     BOOST_TEST(
         (sw::dql::query_from<person>()
-            .where(sw::fields_query<person>::id == 200)
+            .where(sw::fields_query<person>::id == 20)
             .objects(*session)[0] 
         == prsn)
     );
 
     BOOST_TEST(
         (sw::dql::query_from<person>()
-            .where(sw::fields_query<person>::name == "name 200")
+            .where(sw::fields_query<person>::name == "name 20")
             .objects(*session)[0] 
         == prsn)
     );
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(tst_data, * utf::depends_on("tst_populate"))
 
 BOOST_AUTO_TEST_CASE(tst_populate, * utf::depends_on("tst_conn"))
 {
-    for (int idx = 0; idx < 255; ++idx) {
+    for (int idx = 0; idx < 25; ++idx) {
         person prsn{
             .id = idx,
             .name = "name " + std::to_string(idx),
@@ -114,6 +114,5 @@ BOOST_AUTO_TEST_CASE(tst_conn, * utf::enable_if<SOCI_WRAPPER_SQLITE>())
 
     sw::ddl<data_types>::drop_table(*session);
     sw::ddl<data_types>::create_table(*session);
-    BOOST_TEST(true);
 }
 
