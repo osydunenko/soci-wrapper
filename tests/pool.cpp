@@ -14,6 +14,32 @@ static sessions_pool::ptr_type pool;
 static const size_t conn_size = 8;
 static std::list<sessions_pool::session_proxy> proxies;
 
+struct db_table
+{
+    int id;
+    std::string name;
+} value {
+    .id = 1111,
+    .name = "1111"
+};
+
+DECLARE_PERSISTENT_OBJECT(db_table,
+    id,
+    name
+);
+
+BOOST_AUTO_TEST_CASE(tst_session_ddl_dql, * utf::depends_on("tst_session_proxy"))
+{
+    sw::ddl<db_table>::create_table(pool->get_session());
+    sw::dml::persist(pool->get_session(), value);
+    BOOST_TEST(
+        (sw::dql::query_from<db_table>()
+            .where(sw::fields_query<db_table>::id == 1111)
+            .objects(pool->get_session())[0].name == "1111")
+    );
+    BOOST_TEST(pool->size() == conn_size);
+}
+
 BOOST_AUTO_TEST_CASE(tst_session_proxy, * utf::depends_on("tst_release_sessions"))
 {
     // Create empty session

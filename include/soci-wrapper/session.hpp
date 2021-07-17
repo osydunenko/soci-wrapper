@@ -16,29 +16,30 @@ struct session
 
     using raw_ptr_type = session_type *;
 
-    using on_error_type = std::function<void(std::string_view)>;
-
-    static session_ptr_type connect(const std::string &conn_string, on_error_type &&on_error = nullptr)
+    static session_ptr_type connect(const std::string &conn_string)
     {
-        session_ptr_type session_ptr = get_empty_session();
-        try {
-            session_ptr->open(
+        session_ptr_type session_ptr = connect();
+        session_ptr->open(
 #ifdef SOCI_WRAPPER_SQLITE
-                soci::sqlite3,
+            soci::sqlite3,
 #endif
-                conn_string);
-        } catch(const std::exception &ex) {
-            if (on_error) {
-                on_error(ex.what());
-                return nullptr;
-            }
-            throw;
-        }
+            conn_string);
 
         return session_ptr;
     }
 
-    static session_ptr_type get_empty_session()
+    static session_ptr_type connect(const std::string &conn_string, std::string &err)
+    {
+        try {
+            auto conn = connect(conn_string);
+            return conn;
+        } catch (const std::exception &ex) {
+            err = ex.what();
+        }
+        return connect();
+    }
+
+    static session_ptr_type connect()
     {
         return std::make_unique<session_type>();
     }
