@@ -1,5 +1,9 @@
 build/*
 
+doc/*
+
+coverage/*
+
 CMakeLists.txt.user
 
 compile_commands.json

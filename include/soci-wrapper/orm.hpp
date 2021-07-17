@@ -13,6 +13,8 @@
 
 namespace soci_wrapper {
 
+/*! \brief DQL -- Data Query Language
+ */
 struct dql
 {
     template<class Type>
@@ -24,6 +26,8 @@ struct dql
     }
 };
 
+/*! \brief DML -- Data Modification Language
+ */
 struct dml
 {
     template<class ...Type>
@@ -84,6 +88,8 @@ private:
     };
 };
 
+/*! \brief DDL -- Data Definition Language
+ */
 template<class Type>
 struct ddl
 {

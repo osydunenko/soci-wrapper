@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(tst_populate, * utf::depends_on("tst_conn"))
 
 BOOST_AUTO_TEST_CASE(tst_conn, * utf::enable_if<SOCI_WRAPPER_SQLITE>())
 {
-    session = sw::session::connect("tst_object.db", [](std::string_view){});
+    session = sw::session::connect("tst_object.db");
     BOOST_TEST(session->is_connected());
 
     sw::ddl<person>::drop_table(*session);

@@ -24,25 +24,25 @@ struct cpp_to_db_type;
 template<>
 struct cpp_to_db_type<std::string>
 {
-    inline static const std::string db_type = "VARCHAR";
+    inline static const std::string_view db_type = "VARCHAR";
 };
 
 template<class Type, size_t N>
 struct cpp_to_db_type<std::array<Type, N>>
 {
-    inline static const std::string db_type = "CHAR(" + std::to_string(N) + ")";
+    inline static const std::string_view db_type = "CHAR(" + std::to_string(N) + ")";
 };
 
 template<class CPPType>
 struct cpp_to_db_type<CPPType, std::enable_if_t<std::is_integral_v<CPPType>>>
 {
-    inline static const std::string db_type = "INTEGER";
+    inline static const std::string_view db_type = "INTEGER";
 };
 
 template<class CPPType>
 struct cpp_to_db_type<CPPType, std::enable_if_t<std::is_floating_point_v<CPPType>>>
 {
-    inline static const std::string db_type = "REAL";
+    inline static const std::string_view db_type = "REAL";
 };
 
 template<class Type>
