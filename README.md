@@ -1,3 +1,5 @@
+**Work In Progress**
+
 # Contents
 
 - [Synopsis](#Synopsis)
@@ -22,6 +24,7 @@ interface by implementing a DSL for C++ for working with SQL databases.
     * Boost Preprocessor
     * Boost Proto
 * `gcov`, `lcov`, `genhtml`, `doxygen` are optional and serve the documentation/coverage purposes
+
 
 # Building
 
@@ -71,7 +74,7 @@ make doc
 
 As a result, you may find the dir `doc` created in the `${CMAKE_CURRENT_SOURCE_DIR}` and listed the docu.
 
-## Hot To generate the code coverage
+## How To generate the code coverage report
 
 For this purposes you need to have installed some binaries of `lvoc`, `gcov` and `genhtml`
 
