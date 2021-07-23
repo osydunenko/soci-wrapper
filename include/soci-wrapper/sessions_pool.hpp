@@ -39,6 +39,10 @@ public:
 
     struct session_proxy;
 
+    sessions_pool(const sessions_pool &) = delete;
+
+    sessions_pool &operator=(const sessions_pool &) = delete;
+
     /*! \fn static ptr_type create(size_t size, const std::string &conn_string)
      *  \brief Creates (as a factory method) a pointer to the self type by passing 
      *  \a size of connections to be established and \a conn_string as a connection string
