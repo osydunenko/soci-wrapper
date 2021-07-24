@@ -31,7 +31,7 @@ interface by implementing a DSL for C++ for working with SQL databases.
 `soci-wrapper` is a header-only. To use it just add the necessary `#include` line to your source code, such as the
 following: 
 ```cpp
-#include "soci-wrapper/orm.hpp"
+#include "soci-wrapper.hpp"
 ```
 
 ## How To include into cmake
@@ -106,7 +106,7 @@ More examples are available as UTs and located [here...](https://github.com/osyd
 C++ structure definition and declare the struct as a persisted type
 
 ```cpp
-#include "soci-wrapper/orm.hpp"
+#include "soci-wrapper.hpp"
 
 namespace sw = soci_wrapper;
 

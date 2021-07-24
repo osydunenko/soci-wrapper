@@ -9,7 +9,7 @@
 #include <boost/preprocessor.hpp>
 
 namespace soci_wrapper {
-namespace detail {
+namespace details {
 
 template<class Type>
 struct type_meta_data
@@ -37,7 +37,7 @@ struct type_meta_data
     struct dsl_fields {};
 };
 
-} // namespace detail
+} // namespace details
 } // namespace soci_wrapper
 
 #define EXPAND_MEMBERS_IDX(Z, N, DATA) BOOST_PP_COMMA_IF(N) BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(N, DATA))
@@ -63,7 +63,7 @@ struct type_meta_data
 
 #define DECLARE_PERSISTENT_OBJECT(...) \
     namespace soci_wrapper { \
-    namespace detail { \
+    namespace details { \
         template<> \
         struct type_meta_data<BOOST_PP_TUPLE_ELEM(0, BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))> \
         { \

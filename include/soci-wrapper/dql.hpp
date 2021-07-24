@@ -1,12 +1,11 @@
 #pragma once
 
 #include <sstream>
-#include <iostream>
 
 #include "session.hpp"
-#include "terminals.hpp"
-#include "meta_data.hpp"
-#include "detail.hpp"
+#include "types_convertor.hpp"
+#include "base/terminals.hpp"
+#include "base/utility.hpp"
 
 namespace soci_wrapper {
 namespace query {
@@ -27,7 +26,7 @@ struct context: boost::proto::callable_context<const context<Type>>
 
     using result_type = std::string;
 
-    using type_meta_data = detail::type_meta_data<Type>;
+    using type_meta_data = details::type_meta_data<Type>;
 
     template<placeholder::index_type Idx>
     result_type operator()(boost::proto::tag::terminal, placeholder::query_placeholder<Idx>) const
@@ -70,7 +69,7 @@ public:
 
     using query_result_type = typename context_type::result_type;
 
-    using type_meta_data = detail::type_meta_data<Type>;
+    using type_meta_data = details::type_meta_data<Type>;
 
     static_assert(type_meta_data::is_declared::value,
         "The concerned Type is not declared as a persistent type");
@@ -81,7 +80,7 @@ public:
         : m_sql_stream()
     {
         m_sql_stream << "SELECT "
-            << detail::join(type_meta_data::member_names())
+            << base::join(type_meta_data::member_names())
             << " FROM "
             << type_meta_data::class_name();
     }
@@ -124,4 +123,18 @@ private:
 };
 
 } // namespace query
+
+/*! \brief DQL -- Data Query Language
+ */
+struct dql
+{
+    template<class Type>
+    static query::from<Type> query_from()
+    {
+        static_assert(details::type_meta_data<Type>::is_declared::value,
+            "The concerned Type is not declared as a persistent type");
+        return query::from<Type>();
+    }
+};
+
 } // namespace soci_wrapper

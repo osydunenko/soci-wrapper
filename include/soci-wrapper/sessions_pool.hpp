@@ -5,7 +5,7 @@
 #include <memory>
 #include <cassert>
 
-#include "lockable.hpp"
+#include "base/lockable.hpp"
 
 namespace soci_wrapper {
 
@@ -33,7 +33,7 @@ public:
 
     using weak_ptr_type = std::weak_ptr<self_type>;
 
-    using mutex_type = lockable::mutex_type;
+    using mutex_type = base::lockable::mutex_type;
 
     using session_cont_type = std::list<session_ptr_type>;
 

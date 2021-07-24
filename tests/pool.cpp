@@ -4,7 +4,7 @@
 #include <list>
 
 #include <boost/test/unit_test.hpp>
-#include "soci-wrapper/orm.hpp"
+#include "soci-wrapper.hpp"
 
 namespace sw = soci_wrapper;
 namespace utf = boost::unit_test;

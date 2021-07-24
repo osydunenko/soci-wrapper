@@ -9,7 +9,7 @@
 #include <boost/algorithm/string/join.hpp>
 
 namespace soci_wrapper {
-namespace detail {
+namespace base {
 
 template<class Tuple, class Func, std::size_t ...Idxs>
 void tuple_at(std::size_t idx, const Tuple &tuple, Func &&func, std::index_sequence<Idxs...>)
@@ -43,5 +43,5 @@ join(const Cont<T, Args...> &cont, const std::string &sep = ",")
     return boost::algorithm::join(cont, sep);
 }
 
-} // namespace detail
+} // namespace base
 } // namespace soci_wrapper

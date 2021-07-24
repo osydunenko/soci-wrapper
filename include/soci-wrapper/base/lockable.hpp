@@ -3,14 +3,15 @@
 #include <shared_mutex>
 
 #define LOCKABLE_ENTER_TO_READ(shared_mutex) \
-    const auto &dummy_lock = soci_wrapper::lockable::enter_to_read(shared_mutex); \
+    const auto &dummy_lock = soci_wrapper::base::lockable::enter_to_read(shared_mutex); \
     (void)dummy_lock;
 
 #define LOCKABLE_ENTER_TO_WRITE(shared_mutex) \
-    const auto &dummy_lock = soci_wrapper::lockable::enter_to_write(shared_mutex); \
+    const auto &dummy_lock = soci_wrapper::base::lockable::enter_to_write(shared_mutex); \
     (void)dummy_lock;
 
 namespace soci_wrapper {
+namespace base {
 
 struct lockable
 {
@@ -31,4 +32,5 @@ struct lockable
     }
 };
 
+} // namespace base
 } // namespace soci_wrapper
