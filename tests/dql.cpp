@@ -1,7 +1,9 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE dql
 
+#include <array>
 #include <boost/test/unit_test.hpp>
+
 #include "soci-wrapper.hpp"
 
 namespace sw = soci_wrapper;
@@ -26,17 +28,20 @@ struct data_types
     double f_double;
     int f_int;
     std::string f_string;
+    std::array<char, 6> cpp_arr;
 
     bool operator==(const data_types &rhs) const
     {
         return f_double == rhs.f_double &&
             f_int == rhs.f_int &&
-            f_string == rhs.f_string;
+            f_string == rhs.f_string &&
+            cpp_arr == rhs.cpp_arr;
     }
 } dt {
     .f_double = std::numeric_limits<double>::max(),
     .f_int = std::numeric_limits<int>::max(),
-    .f_string = "ABCDE"
+    .f_string = "ABCDE",
+    .cpp_arr{"ABCDE"}
 };
 
 DECLARE_PERSISTENT_OBJECT(person,
@@ -48,7 +53,8 @@ DECLARE_PERSISTENT_OBJECT(person,
 DECLARE_PERSISTENT_OBJECT(data_types,
     f_double,
     f_int,
-    f_string
+    f_string,
+    cpp_arr
 );
 
 sw::session::session_ptr_type session;

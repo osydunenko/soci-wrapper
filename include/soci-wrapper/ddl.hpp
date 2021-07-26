@@ -85,7 +85,7 @@ private:
         template<class T>
         void operator()(const T &val)
         {
-            using cpp_type = std::remove_pointer_t<decltype(val.first)>;
+            using cpp_type = std::remove_reference_t<std::remove_pointer_t<decltype(val.first)>>;
 
             std::stringstream str;
             str << val.second << " " << cpp_to_db_type<cpp_type>::db_type;
@@ -112,7 +112,5 @@ private:
 
 template<class Type>
 using fields_query = typename ddl<Type>::fields_type;
-
-
 
 } // namespace soci_wrapper
