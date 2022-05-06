@@ -8,15 +8,14 @@
 
 namespace soci_wrapper {
 
-struct session
-{
+struct session {
     using session_type = soci::session;
 
     using session_ptr_type = std::unique_ptr<session_type>;
 
-    using raw_ptr_type = session_type *;
+    using raw_ptr_type = session_type*;
 
-    static session_ptr_type connect(const std::string &conn_string)
+    static session_ptr_type connect(const std::string& conn_string)
     {
         session_ptr_type session_ptr = connect();
         session_ptr->open(
@@ -28,12 +27,12 @@ struct session
         return session_ptr;
     }
 
-    static session_ptr_type connect(const std::string &conn_string, std::string &err)
+    static session_ptr_type connect(const std::string& conn_string, std::string& err)
     {
         try {
             auto conn = connect(conn_string);
             return conn;
-        } catch (const std::exception &ex) {
+        } catch (const std::exception& ex) {
             err = ex.what();
         }
         return connect();

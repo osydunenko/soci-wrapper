@@ -42,19 +42,18 @@ BOOST_AUTO_TEST_CASE(tst_session_ddl_dql, * utf::depends_on("tst_session_proxy")
 
 BOOST_AUTO_TEST_CASE(tst_session_proxy, * utf::depends_on("tst_release_sessions"))
 {
-    // Create empty session
-    auto emp = sessions_pool::get_empty_session();
-    BOOST_TEST(!emp.is_connected());
-
-    // and compare to a valid session
+    // Create a session
     auto valid = pool->get_session();
-    BOOST_TEST(emp.is_connected() != valid.is_connected());
+    BOOST_TEST(valid.is_connected());
     BOOST_TEST(pool->size() == conn_size - 1);
 
-    // Move assignment operator and relaeasing of the valid session
-    valid = std::move(emp);
+    {
+        // and compare to an invalid session
+        auto empty = sessions_pool::get_empty_session();
+        valid = std::move(empty);
+    }
 
-    BOOST_TEST(emp.is_connected() == valid.is_connected());
+    BOOST_TEST(!valid.is_connected());
     BOOST_TEST(pool->size() == conn_size);
 }
 

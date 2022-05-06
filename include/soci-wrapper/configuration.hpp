@@ -4,9 +4,8 @@
 
 namespace soci_wrapper {
 
-template<class Type>
-struct configuration
-{
+template <class Type>
+struct configuration {
 public:
     using self_type = configuration<Type>;
 
@@ -21,30 +20,30 @@ public:
     static_assert(details::type_meta_data<Type>::is_declared::value,
         "The concerned Type is not declared as a persistent type");
 
-    template<class Expr>
-    static void eval(const Expr &expr)
+    template <class Expr>
+    static void eval(const Expr& expr)
     {
-        static_assert(boost::proto::matches<Expr, config::configuration_grammar>::value, 
+        static_assert(boost::proto::matches<Expr, config::configuration_grammar>::value,
             "Invalid Configuration Grammar");
-        boost::proto::eval(expr, context_type{});
+        boost::proto::eval(expr, context_type {});
     }
 
-    static const container_type &not_null()
+    static const container_type& not_null()
     {
         return config::configuration_attributes<Type>::not_null();
     }
 
-    static const container_type &unique()
+    static const container_type& unique()
     {
         return config::configuration_attributes<Type>::unique();
     }
 
-    static const container_type &primary_key()
+    static const container_type& primary_key()
     {
         return config::configuration_attributes<Type>::primary_key();
     }
 
-    static const foreign_key_container_type &foreign_key()
+    static const foreign_key_container_type& foreign_key()
     {
         return config::configuration_attributes<Type>::foreign_key();
     }
@@ -54,7 +53,7 @@ static config::not_null_constraint not_null_constraint;
 static config::unique_constraint unique_constraint;
 static config::primary_key_constraint primary_key_constraint;
 
-template<class Type>
+template <class Type>
 using foreign_key_constraint = config::foreign_key_constraint<Type>;
 
 } // namespace soci_wrapper

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <list>
-#include <string>
-#include <memory>
 #include <cassert>
+#include <list>
+#include <memory>
+#include <string>
 
 #include "base/lockable.hpp"
 
@@ -15,12 +15,11 @@ namespace soci_wrapper {
  *  Once a client acquires a connections by using get_session(), the ownership is moved out
  *  from the objects towards client via session_proxy.
  */
-template<class Session>
-class sessions_pool: public std::enable_shared_from_this<sessions_pool<Session>>
-{
+template <class Session>
+class sessions_pool : public std::enable_shared_from_this<sessions_pool<Session>> {
 public:
     using self_type = sessions_pool<Session>;
-    
+
     using self_ptr_type = std::shared_ptr<self_type>;
 
     using session_type = Session;
@@ -39,18 +38,18 @@ public:
 
     struct session_proxy;
 
-    sessions_pool(const sessions_pool &) = delete;
+    sessions_pool(const sessions_pool&) = delete;
 
-    sessions_pool &operator=(const sessions_pool &) = delete;
+    sessions_pool& operator=(const sessions_pool&) = delete;
 
     /*! \fn static ptr_type create(size_t size, const std::string &conn_string)
-     *  \brief Creates (as a factory method) a pointer to the self type by passing 
+     *  \brief Creates (as a factory method) a pointer to the self type by passing
      *  \a size of connections to be established and \a conn_string as a connection string
      *  \param size The size of connections to be instantiated
      *  \param conn_string The connection string for establishing of the connections
      *  \return A pointer to the self type
      */
-    static ptr_type create(size_t size, const std::string &conn_string)
+    static ptr_type create(size_t size, const std::string& conn_string)
     {
         return ptr_type(new self_type(size, conn_string));
     }
@@ -103,19 +102,18 @@ public:
 
     /*! \brief A proxy struct for the session transmitting
      *
-     *  The struct wrapps a raw session and created by passing session_ptr_type 
-     *  During the object lifetime it holds a session. Once the object is deleted, it has returned 
+     *  The struct wrapps a raw session and created by passing session_ptr_type
+     *  During the object lifetime it holds a session. Once the object is deleted, it has returned
      *  the ownership back if session_pool is still alive
      */
-    struct session_proxy
-    {
-        operator session_raw_type &()
+    struct session_proxy {
+        operator session_raw_type&()
         {
             assert(m_session);
             return *m_session;
         }
 
-        operator const session_raw_type &() const
+        operator const session_raw_type&() const
         {
             assert(m_session);
             return *m_session;
@@ -123,32 +121,27 @@ public:
 
         bool is_connected() const
         {
-            assert(m_session);
-            return m_session->is_connected();
+            return m_session ? m_session->is_connected() : false;
         }
 
         session_proxy() = delete;
 
-        session_proxy(const session_proxy &) = delete;
+        session_proxy(const session_proxy&) = delete;
 
-        session_proxy &operator=(const session_proxy &) = delete;
+        session_proxy& operator=(const session_proxy&) = delete;
 
-        session_proxy(session_proxy &&other)
+        session_proxy(session_proxy&& other)
             : m_pool(std::move(other.m_pool))
             , m_session(std::move(other.m_session))
         {
-            other.release_session();
         }
 
-        session_proxy &operator=(session_proxy &&other)
+        session_proxy& operator=(session_proxy&& other)
         {
-            assert(this != &other);
-            release_session();
-            std::swap(m_pool, other.m_pool);
-            std::swap(m_session, other.m_session);
+            swap(*this, other);
             return *this;
         }
-        
+
         ~session_proxy()
         {
             release_session();
@@ -156,6 +149,13 @@ public:
 
     private:
         friend self_type;
+
+        friend void swap(session_proxy& first, session_proxy& second) noexcept
+        {
+            using std::swap;
+            swap(first.m_pool, second.m_pool);
+            swap(first.m_session, second.m_session);
+        }
 
         session_proxy(weak_ptr_type pool, session_ptr_type session)
             : m_pool(pool)
@@ -172,13 +172,13 @@ public:
                 m_session = session_type::connect();
             }
         }
-        
+
         weak_ptr_type m_pool;
         session_ptr_type m_session;
     };
 
 private:
-    sessions_pool(size_t size, const std::string &conn_string)
+    sessions_pool(size_t size, const std::string& conn_string)
         : m_idle()
         , m_mutex()
     {
