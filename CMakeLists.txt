@@ -88,7 +88,7 @@ file(GLOB_RECURSE SRCS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 
 # Decl. clang-format target
 add_custom_target(
-    clangformat
+    ${PROJECT_NAME}_clangformat
     COMMAND ${CLANGFORMAT_PATH} -i -style=WebKit ${SRCS}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include
     COMMENT "Fomatting the code with ${CLANGFORMAT_PATH}"
@@ -96,7 +96,7 @@ add_custom_target(
 )
 
 # Exclude the coverage target from all
-set_target_properties(clangformat PROPERTIES EXLCLUDE_FROM_ALL TRUE)
+set_target_properties(${PROJECT_NAME}_clangformat PROPERTIES EXLCLUDE_FROM_ALL TRUE)
 
 install(
     TARGETS ${PROJECT_NAME}
