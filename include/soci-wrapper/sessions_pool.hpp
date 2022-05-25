@@ -69,7 +69,7 @@ public:
      */
     session_proxy get_session()
     {
-        LOCKABLE_ENTER_TO_WRITE(m_mutex);
+        SW_LOCKABLE_ENTER_TO_WRITE(m_mutex);
         if (m_idle.empty())
             return get_empty_session();
 
@@ -85,7 +85,7 @@ public:
      */
     void release_session(session_ptr_type session)
     {
-        LOCKABLE_ENTER_TO_WRITE(m_mutex);
+        SW_LOCKABLE_ENTER_TO_WRITE(m_mutex);
         if (session && session->is_connected())
             m_idle.emplace_back(std::move(session));
     }
@@ -96,7 +96,7 @@ public:
      */
     size_t size() const
     {
-        LOCKABLE_ENTER_TO_READ(m_mutex);
+        SW_LOCKABLE_ENTER_TO_READ(m_mutex);
         return m_idle.size();
     }
 
