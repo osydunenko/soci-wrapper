@@ -49,9 +49,9 @@ public:
     }
 };
 
-static config::not_null_constraint not_null_constraint;
-static config::unique_constraint unique_constraint;
-static config::primary_key_constraint primary_key_constraint;
+[[maybe_unused]] static config::not_null_constraint not_null_constraint;
+[[maybe_unused]] static config::unique_constraint unique_constraint;
+[[maybe_unused]] static config::primary_key_constraint primary_key_constraint;
 
 template <class Type>
 using foreign_key_constraint = config::foreign_key_constraint<Type>;

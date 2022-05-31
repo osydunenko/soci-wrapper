@@ -2,20 +2,15 @@ cmake_minimum_required(VERSION 3.16)
 
 project(soci_wrapper)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 # Options decl.
 option(SOCI_EMPTY OFF)
+option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
-option(CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
-option(SQLITE3 "Link against sqlite3" OFF)
+option(SW_SQLITE3 "Link against sqlite3" OFF)
 
 # Definitions decl.
 add_compile_definitions($<$<CONFIG:Debug>:DEBUG=1>)
-add_compile_definitions(SOCI_WRAPPER_SQLITE=1)
+add_compile_definitions($<$<BOOL:${SW_SQLITE3}>:SOCI_WRAPPER_SQLITE=1>)
 
 # Check prereqs
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
@@ -28,7 +23,7 @@ find_program(CLANGFORMAT_PATH clang-format)
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
 add_subdirectory(3rdParty/soci)
 
@@ -56,7 +51,8 @@ target_include_directories(
 target_link_libraries(
     ${PROJECT_NAME}
     INTERFACE
-        $<BUILD_INTERFACE:$<$<BOOL:${SQLITE3}>:soci_core soci_sqlite3>>
+        $<BUILD_INTERFACE:soci_core>
+        $<BUILD_INTERFACE:$<$<BOOL:${SW_SQLITE3}>:soci_sqlite3>>
 )
 
 # Decl. doc target
@@ -110,7 +106,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION include)
 
 message(STATUS "-------------------------------------------------------")
 message(STATUS "SW_BUILD_TESTS:..............${SW_BUILD_TESTS}")
-message(STATUS "CPPTEST_COVERAGE:............${CPPTEST_COVERAGE}")
+message(STATUS "SW_CPPTEST_COVERAGE:.........${SW_CPPTEST_COVERAGE}")
 message(STATUS "CMAKE_BUILD_TYPE:............${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_VERSION:...............${CMAKE_VERSION}")
 message(STATUS "CMAKE_C_COMPILER:............${CMAKE_C_COMPILER}")

@@ -90,7 +90,7 @@ So, to have the coverage results use the following set of commands
 
 ```sh
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Debug -DSW_BUILD_TESTS=ON -DCPPTEST_COVERAGE=ON ../
+cmake -DCMAKE_BUILD_TYPE=Debug -DSW_BUILD_TESTS=ON -DSW_CPPTEST_COVERAGE=ON ../
 make -j 4
 make test
 make coverage

@@ -3,7 +3,7 @@ include(CTest)
 file(GLOB TST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 
 # Add test coverage if requested and possible
-if (${CMAKE_CXX_COMPILER_ID} MATCHES GNU AND ${CPPTEST_COVERAGE})
+if (${CMAKE_CXX_COMPILER_ID} MATCHES GNU AND ${SW_CPPTEST_COVERAGE})
     if (NOT GCOV_PATH)
         message(FATAL_ERROR "gcov not found. aborting...")
     endif()
