@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 project(soci_wrapper)
 
 # Options decl.
-option(SOCI_EMPTY OFF)
 option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
-option(SW_SQLITE3 "Link against sqlite3" ON)
+option(SW_SQLITE3 "Link against sqlite3" OFF)
 
+set(SOCI_EMPTY OFF)
 set(SOCI_TESTS OFF)
 
 # Definitions decl.
@@ -39,23 +36,19 @@ if(SW_BUILD_TESTS)
     add_subdirectory("${PROJECT_SOURCE_DIR}/tests")
 endif()
 
-include(GNUInstallDirs)
-
 target_include_directories(
     ${PROJECT_NAME}
     INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rdParty/soci/include>
-        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/3rdParty/soci/include>
-        $<INSTALL_INTERFACE:Boost::headers>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/3rdParty/soci/include
+        ${PROJECT_BINARY_DIR}/3rdParty/soci/include
 )
 
 target_link_libraries(
     ${PROJECT_NAME}
     INTERFACE
-        $<BUILD_INTERFACE:soci_core>
-        $<BUILD_INTERFACE:$<$<BOOL:${SW_SQLITE3}>:soci_sqlite3>>
+        soci_core
+        $<$<BOOL:${SW_SQLITE3}>:soci_sqlite3>
 )
 
 # Decl. doc target
@@ -96,16 +89,6 @@ add_custom_target(
 
 # Exclude the coverage target from all
 set_target_properties(${PROJECT_NAME}_clangformat PROPERTIES EXLCLUDE_FROM_ALL TRUE)
-
-install(
-    TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}_Targets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION include)
 
 message(STATUS "-------------------------------------------------------")
 message(STATUS "SW_BUILD_TESTS:..............${SW_BUILD_TESTS}")

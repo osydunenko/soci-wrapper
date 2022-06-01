@@ -1,12 +1,13 @@
 #pragma once
 
+#include <mutex>
 #include <shared_mutex>
 
-#define SW_LOCKABLE_ENTER_TO_READ(shared_mutex)                                            \
+#define SW_LOCKABLE_ENTER_TO_READ(shared_mutex)                                         \
     const auto& dummy_lock = soci_wrapper::base::lockable::enter_to_read(shared_mutex); \
     (void)dummy_lock;
 
-#define SW_LOCKABLE_ENTER_TO_WRITE(shared_mutex)                                            \
+#define SW_LOCKABLE_ENTER_TO_WRITE(shared_mutex)                                         \
     const auto& dummy_lock = soci_wrapper::base::lockable::enter_to_write(shared_mutex); \
     (void)dummy_lock;
 
