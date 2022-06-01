@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 project(soci_wrapper)
 
 # Options decl.
 option(SOCI_EMPTY OFF)
 option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
-option(SW_SQLITE3 "Link against sqlite3" OFF)
+option(SW_SQLITE3 "Link against sqlite3" ON)
+
+set(SOCI_TESTS OFF)
 
 # Definitions decl.
 add_compile_definitions($<$<CONFIG:Debug>:DEBUG=1>)
@@ -32,8 +37,6 @@ if(SW_BUILD_TESTS)
     enable_testing()
     set(SOCI_TESTS ON)
     add_subdirectory("${PROJECT_SOURCE_DIR}/tests")
-else()
-    option(SOCI_TESTS OFF)
 endif()
 
 include(GNUInstallDirs)
