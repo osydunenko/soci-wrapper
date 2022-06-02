@@ -7,12 +7,8 @@ option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
 option(SW_SQLITE3 "Link against sqlite3" OFF)
 
-set(SOCI_EMPTY OFF)
-set(SOCI_TESTS OFF)
-
-# Definitions decl.
-add_compile_definitions($<$<CONFIG:Debug>:DEBUG=1>)
-add_compile_definitions($<$<BOOL:${SW_SQLITE3}>:SOCI_WRAPPER_SQLITE=1>)
+set(SOCI_EMPTY OFF CACHE BOOL "SOCI Emtpy")
+set(SOCI_TESTS OFF CACHE BOOL "SOCI Tests")
 
 # Check prereqs
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
@@ -27,14 +23,22 @@ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
-add_subdirectory(3rdParty/soci)
-
 if(SW_BUILD_TESTS)
     message(STATUS "Building tests")
     enable_testing()
     set(SOCI_TESTS ON)
     add_subdirectory("${PROJECT_SOURCE_DIR}/tests")
 endif()
+
+add_subdirectory(3rdParty/soci)
+
+# Definitions decl.
+target_compile_definitions(
+    ${PROJECT_NAME}
+    INTERFACE
+        $<$<CONFIG:Debug>:DEBUG>
+        $<$<BOOL:${SW_SQLITE3}>:SOCI_WRAPPER_SQLITE>
+)
 
 target_include_directories(
     ${PROJECT_NAME}
