@@ -43,9 +43,9 @@ target_compile_definitions(
 target_include_directories(
     ${PROJECT_NAME}
     INTERFACE
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/3rdParty/soci/include
-        ${PROJECT_BINARY_DIR}/3rdParty/soci/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/soci/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/3rdParty/soci/include>
 )
 
 target_link_libraries(

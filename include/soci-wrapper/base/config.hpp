@@ -64,7 +64,7 @@ namespace config {
 
         std::string_view reference_table() const
         {
-            return details::type_meta_data<Type>::class_name();
+            return details::type_meta_data<Type>::table_name();
         }
 
         std::string_view reference_column() const

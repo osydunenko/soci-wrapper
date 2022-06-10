@@ -35,8 +35,9 @@ namespace details {
             std::array<char, len> arr {};
 
             auto append = [i = 0, &arr](const std::string_view& v) mutable {
-                for (auto c : v)
+                for (auto c : v) {
                     arr[i++] = c;
+                }
             };
 
             (append(Strs), ...);

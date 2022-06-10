@@ -26,7 +26,7 @@ struct ddl {
     {
         std::stringstream sql;
         sql << "DROP TABLE IF EXISTS "
-            << self_type::type_meta_data::class_name();
+            << self_type::type_meta_data::table_name();
         session << sql.str();
     }
 
@@ -36,7 +36,7 @@ struct ddl {
 
         std::stringstream sql;
         sql << "CREATE TABLE IF NOT EXISTS "
-            << self_type::type_meta_data::class_name()
+            << self_type::type_meta_data::table_name()
             << " (";
 
         std::vector<std::string> fields;
@@ -52,7 +52,7 @@ struct ddl {
         }
 
         for (const auto& v : self_type::configuration_type::foreign_key()) {
-            sql /*<< ",CONSTRAINT fk_" << self_type::type_meta_data::class_name() << "_" << v.first*/
+            sql /*<< ",CONSTRAINT fk_" << self_type::type_meta_data::table_name() << "_" << v.first*/
                 << ", FOREIGN KEY (" << v.first << ")"
                 << " REFERENCES " << v.second.first << "(" << v.second.second << ")";
         }

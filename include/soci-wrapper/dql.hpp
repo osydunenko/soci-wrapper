@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <sstream>
 
 #include "base/terminals.hpp"
@@ -77,7 +78,7 @@ namespace query {
             m_sql_stream << "SELECT "
                          << base::join(type_meta_data::member_names())
                          << " FROM "
-                         << type_meta_data::class_name();
+                         << type_meta_data::table_name();
         }
 
         template <class Expr>
@@ -92,9 +93,10 @@ namespace query {
             return m_sql_stream.str();
         }
 
-        std::vector<Type> objects(session::session_type& session)
+        template <template <class...> class Cont = std::vector, class... Args>
+        Cont<Type, Args...> objects(session::session_type& session)
         {
-            return exec(session);
+            return exec<Cont, Args...>(session);
         }
 
     private:
@@ -106,12 +108,11 @@ namespace query {
             return boost::proto::eval(expr, context_type {});
         }
 
-        std::vector<Type> exec(session::session_type& session)
+        template <template <class...> class Cont, class... Args>
+        Cont<Type, Args...> exec(session::session_type& session)
         {
-            std::vector<Type> ret;
             soci::rowset<Type> rs = (session.prepare << sql());
-            std::copy(rs.begin(), rs.end(), std::back_inserter(ret));
-            return std::move(ret);
+            return Cont<Type, Args...> { rs.begin(), rs.end() };
         }
 
         std::stringstream m_sql_stream;

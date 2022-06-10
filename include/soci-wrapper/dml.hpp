@@ -41,10 +41,10 @@ private:
                 "The object being persisted was not declared");
 
             auto fields = type_meta_data::member_names();
-            std::vector<std::string> sql_placeholders;
+            std::vector<std::string> sql_placeholders { fields.size() };
 
             std::transform(std::begin(fields), std::end(fields),
-                std::back_inserter(sql_placeholders),
+                std::begin(sql_placeholders),
                 [](auto field) {
                     std::stringstream str;
                     str << ":" << field;
@@ -52,7 +52,7 @@ private:
                 });
 
             std::stringstream sql;
-            sql << "INSERT INTO " << type_meta_data::class_name() << " ("
+            sql << "INSERT INTO " << type_meta_data::table_name() << " ("
                 << base::join(fields)
                 << ") VALUES ("
                 << base::join(sql_placeholders)
