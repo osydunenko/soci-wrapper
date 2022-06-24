@@ -10,6 +10,7 @@
 #include "base/meta_data.hpp"
 #include "base/utility.hpp"
 #include "soci/soci.h"
+#include "configuration.hpp"
 
 namespace soci_wrapper {
 namespace details {
@@ -158,7 +159,8 @@ struct to_ind<std::string> {
 namespace soci {
 
 template <class Type>
-requires soci_wrapper::details::type_meta_data<Type>::is_declared::value struct type_conversion<Type> {
+requires soci_wrapper::details::type_meta_data<Type>::is_declared::value 
+struct type_conversion<Type> {
     using base_type = values;
 
     using object_type = Type;
@@ -228,7 +230,12 @@ private:
             cpp_type* value = reinterpret_cast<cpp_type*>(
                 reinterpret_cast<size_t>(&object) + field_offset);
 
-            soci::indicator ind = soci_wrapper::to_ind<cpp_type>::get_ind(*value);
+            // NOTE: if a field mark as autoincremented
+            // then ignore the value
+            soci::indicator ind = soci_wrapper::configuration<object_type>::auto_increment()
+                .contains(val.second) ? i_null :
+                soci_wrapper::to_ind<cpp_type>::get_ind(*value);
+
             if constexpr (!::soci_wrapper::details::treat_as_array_v<cpp_type>)
                 values.set(val.second, *value, ind);
             else

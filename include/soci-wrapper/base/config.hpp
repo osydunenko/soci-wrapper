@@ -33,6 +33,12 @@ namespace config {
             return values;
         }
 
+        static container_type& auto_increment()
+        {
+            static container_type values;
+            return values;
+        }
+
         static foreign_key_container_type& foreign_key()
         {
             static foreign_key_container_type values;
@@ -47,6 +53,9 @@ namespace config {
     };
 
     struct primary_key_constraint {
+    };
+
+    struct auto_increment_constraint {
     };
 
     template <class Type>
@@ -77,6 +86,7 @@ namespace config {
                                          boost::proto::terminal<not_null_constraint>,
                                          boost::proto::terminal<unique_constraint>,
                                          boost::proto::terminal<primary_key_constraint>,
+                                         boost::proto::terminal<auto_increment_constraint>,
                                          boost::proto::terminal<foreign_key_constraint<boost::proto::_>>> {
     };
 
@@ -115,6 +125,12 @@ namespace config {
         result_type operator()(boost::proto::tag::terminal, const primary_key_constraint&) const
         {
             configuration_attributes<Type>::primary_key().emplace(field_name);
+            return true;
+        }
+
+        result_type operator()(boost::proto::tag::terminal, const auto_increment_constraint&) const
+        {
+            configuration_attributes<Type>::auto_increment().emplace(field_name);
             return true;
         }
 

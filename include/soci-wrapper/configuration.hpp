@@ -43,15 +43,21 @@ public:
         return config::configuration_attributes<Type>::primary_key();
     }
 
+    static const container_type& auto_increment()
+    {
+        return config::configuration_attributes<Type>::auto_increment();
+    }
+
     static const foreign_key_container_type& foreign_key()
     {
         return config::configuration_attributes<Type>::foreign_key();
     }
 };
 
-[[maybe_unused]] static config::not_null_constraint not_null_constraint;
-[[maybe_unused]] static config::unique_constraint unique_constraint;
-[[maybe_unused]] static config::primary_key_constraint primary_key_constraint;
+[[maybe_unused]] constexpr config::not_null_constraint not_null_constraint;
+[[maybe_unused]] constexpr config::unique_constraint unique_constraint;
+[[maybe_unused]] constexpr config::primary_key_constraint primary_key_constraint;
+[[maybe_unused]] constexpr config::auto_increment_constraint auto_increment_constraint;
 
 template <class Type>
 using foreign_key_constraint = config::foreign_key_constraint<Type>;

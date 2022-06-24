@@ -46,14 +46,8 @@ struct ddl {
 
         sql << base::join(fields);
 
-        // process pk & fk constrains
-        if (self_type::configuration_type::primary_key().size()) {
-            sql << ", PRIMARY KEY (" << base::join(self_type::configuration_type::primary_key()) << ")";
-        }
-
         for (const auto& v : self_type::configuration_type::foreign_key()) {
-            sql /*<< ",CONSTRAINT fk_" << self_type::type_meta_data::table_name() << "_" << v.first*/
-                << ", FOREIGN KEY (" << v.first << ")"
+            sql << ", FOREIGN KEY (" << v.first << ")"
                 << " REFERENCES " << v.second.first << "(" << v.second.second << ")";
         }
 
@@ -87,13 +81,22 @@ private:
             str << val.second << " " << cpp_to_db_type<cpp_type>::db_type;
 
             // process NOT NULL
-            if (self_type::configuration_type::not_null().find(val.second) != self_type::configuration_type::not_null().end()) {
+            if (self_type::configuration_type::not_null().contains(val.second)) {
                 str << " NOT NULL";
             }
 
             // process UNIQUE
-            if (self_type::configuration_type::unique().find(val.second) != self_type::configuration_type::unique().end()) {
+            if (self_type::configuration_type::unique().contains(val.second)) {
                 str << " UNIQUE";
+            }
+
+            // process AUTOINCREMENT
+            if (self_type::configuration_type::auto_increment().contains(val.second)) {
+                str << " PRIMARY KEY AUTOINCREMENT";
+            } else
+            // process PRIMARY KEY
+            if (self_type::configuration_type::primary_key().contains(val.second)) {
+                str << " PRIMARY KEY";
             }
 
             m_vec.emplace_back(str.str());
