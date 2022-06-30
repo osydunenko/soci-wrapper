@@ -58,7 +58,6 @@ private:
                 << base::join(sql_placeholders)
                 << ")";
 
-            std::cout << sql.str() << std::endl;
             sql_session << sql.str(), soci::use(std::forward<Type>(object));
         }
 
