@@ -59,10 +59,16 @@ struct ddl {
     template <class... Expr>
     static void create_table(session::session_type& session, const Expr&... expr)
     {
+        config(expr...);
+        self_type::create_table(session);
+    }
+
+    template <class... Expr>
+    static void config(const Expr&... expr)
+    {
         // Processing the configuration grammar
         [](...) {}(
             (self_type::configuration_type::eval(expr), true)...);
-        self_type::create_table(session);
     }
 
 private:
