@@ -63,12 +63,17 @@ BOOST_AUTO_TEST_CASE(tst_data, * utf::depends_on("tst_populate"))
 {
     std::vector<person> data = sw::dql::query_from<person>().objects(*session);
     BOOST_TEST(data.size() == 25);
+    BOOST_TEST(sw::dql::query_from<person>().count(*session) == 25);
 
     for (int idx = 0; idx < 25; ++idx) {
         BOOST_TEST(data[idx].id == idx);
         BOOST_TEST(data[idx].name == "name " + std::to_string(idx));
         BOOST_TEST(data[idx].surname == "surname " + std::to_string(idx));
     }
+
+    BOOST_TEST(
+        (sw::dql::query_from<person>().object(*session) == data[0])
+    );
 
     person prsn{
         .id = 20,
@@ -79,7 +84,7 @@ BOOST_AUTO_TEST_CASE(tst_data, * utf::depends_on("tst_populate"))
     BOOST_TEST(
         (sw::dql::query_from<person>()
             .where(sw::fields_query<person>::id == 20)
-            .objects(*session)[0] 
+            .object(*session) 
         == prsn)
     );
 

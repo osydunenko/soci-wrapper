@@ -40,5 +40,6 @@ namespace base {
     {
         return boost::algorithm::join(cont, sep);
     }
+
 } // namespace base
 } // namespace soci_wrapper

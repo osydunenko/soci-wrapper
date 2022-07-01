@@ -158,5 +158,5 @@ sw::dml::persist(*session, prsn); // storing the data
 
 prsn = sw::dql::query_from<person>()
     .where(sw::fields_query<person>::id == 20)
-    .objects(*session)[0]; // querying the data by using id
+    .object(*session); // querying the data by using id
 ```

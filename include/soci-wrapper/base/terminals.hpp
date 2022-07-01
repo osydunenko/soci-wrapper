@@ -32,7 +32,8 @@ namespace placeholder {
 
 struct literal_terminals : boost::proto::or_<
                                boost::proto::terminal<boost::proto::convertible_to<int>>,
-                               boost::proto::terminal<boost::proto::convertible_to<std::string>>> {
+                               boost::proto::terminal<boost::proto::convertible_to<std::string>>,
+                               boost::proto::terminal<boost::proto::convertible_to<std::string_view>>> {
 };
 
 } // namespace soci_wrapper
