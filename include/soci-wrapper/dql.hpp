@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <iterator>
 #include <sstream>
 
 #include "base/terminals.hpp"
@@ -54,6 +55,12 @@ namespace query {
         }
     };
 
+    struct all_fields_tag {
+    };
+
+    struct count_tag {
+    };
+
     template <class Type>
     class from {
     public:
@@ -73,12 +80,8 @@ namespace query {
             "The concerned Type is not default constructible");
 
         from()
-            : m_sql_stream()
+            : m_sql_stream {}
         {
-            m_sql_stream << "SELECT "
-                         << base::join(type_meta_data::member_names())
-                         << " FROM "
-                         << type_meta_data::table_name();
         }
 
         template <class Expr>
@@ -88,15 +91,27 @@ namespace query {
             return *this;
         }
 
-        std::string sql() const
-        {
-            return m_sql_stream.str();
-        }
-
         template <template <class...> class Cont = std::vector, class... Args>
         Cont<Type, Args...> objects(session::session_type& session)
         {
-            return exec<Cont, Args...>(session);
+            soci::rowset<Type> rs = (session.prepare << sql_builder(all_fields_tag {}));
+            return Cont<Type, Args...> { std::make_move_iterator(rs.begin()), std::make_move_iterator(rs.end()) };
+        }
+
+        template <class... Args>
+        Type object(session::session_type& session)
+        {
+            Type ret {};
+            session << sql_builder(all_fields_tag {}), soci::into(ret);
+            return ret;
+        }
+
+        template <class... Args>
+        int count(session::session_type& session)
+        {
+            int ret {};
+            session << sql_builder(count_tag {}), soci::into(ret);
+            return ret;
         }
 
     private:
@@ -108,11 +123,24 @@ namespace query {
             return boost::proto::eval(expr, context_type {});
         }
 
-        template <template <class...> class Cont, class... Args>
-        Cont<Type, Args...> exec(session::session_type& session)
+        std::string sql_builder(auto&& tag) const
         {
-            soci::rowset<Type> rs = (session.prepare << sql());
-            return Cont<Type, Args...> { rs.begin(), rs.end() };
+            std::stringstream sql;
+
+            using T = std::decay_t<decltype(tag)>;
+
+            if constexpr (std::is_same_v<T, all_fields_tag>) {
+                sql << "SELECT "
+                    << base::join(type_meta_data::member_names())
+                    << " FROM "
+                    << type_meta_data::table_name();
+            } else if constexpr (std::is_same_v<T, count_tag>) {
+                sql << "SELECT COUNT(*) FROM "
+                    << type_meta_data::table_name();
+            }
+
+            sql << m_sql_stream.str();
+            return sql.str();
         }
 
         std::stringstream m_sql_stream;

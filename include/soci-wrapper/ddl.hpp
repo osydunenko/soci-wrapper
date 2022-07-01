@@ -59,10 +59,16 @@ struct ddl {
     template <class... Expr>
     static void create_table(session::session_type& session, const Expr&... expr)
     {
+        config(expr...);
+        self_type::create_table(session);
+    }
+
+    template <class... Expr>
+    static void config(const Expr&... expr)
+    {
         // Processing the configuration grammar
         [](...) {}(
             (self_type::configuration_type::eval(expr), true)...);
-        self_type::create_table(session);
     }
 
 private:
@@ -94,10 +100,10 @@ private:
             if (self_type::configuration_type::auto_increment().contains(val.second)) {
                 str << " PRIMARY KEY AUTOINCREMENT";
             } else
-            // process PRIMARY KEY
-            if (self_type::configuration_type::primary_key().contains(val.second)) {
-                str << " PRIMARY KEY";
-            }
+                // process PRIMARY KEY
+                if (self_type::configuration_type::primary_key().contains(val.second)) {
+                    str << " PRIMARY KEY";
+                }
 
             m_vec.emplace_back(str.str());
         }

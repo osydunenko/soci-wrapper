@@ -85,7 +85,8 @@ namespace details {
                 static std::string_view table_name()                                                                                                    \
                 {                                                                                                                                       \
                     static constexpr std::string_view cls_name { BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(0, BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__))) }; \
-                    static constexpr std::string_view tbl_name = cls_name.substr(cls_name.rfind("::") + 2);                                             \
+                    static constexpr size_t pos = cls_name.rfind("::") != std::string_view::npos ? cls_name.rfind("::") + 2 : 0;                        \
+                    static constexpr std::string_view tbl_name = cls_name.substr(pos);                                                                  \
                     return tbl_name;                                                                                                                    \
                 }                                                                                                                                       \
                 static std::vector<std::string_view> member_names()                                                                                     \
