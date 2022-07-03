@@ -137,7 +137,7 @@ using cpp_to_soci_type_t = typename cpp_to_soci_type<Type>::type;
 
 template <class V>
 struct to_ind {
-    static soci::indicator get_ind(const V& val)
+    static soci::indicator get_ind([[maybe_unused]] const V& val)
     {
         return soci::i_ok;
     }
@@ -201,7 +201,7 @@ private:
                 reinterpret_cast<size_t>(&object) + field_offset);
 
             auto&& src = values.get<soci_type>(val.second, soci_type {});
-            if constexpr (!::soci_wrapper::details::treat_as_array_v<cpp_type>)
+            if constexpr (not ::soci_wrapper::details::treat_as_array_v<cpp_type>)
                 *value = std::move(src);
             else
                 std::copy(std::begin(src), std::end(src), std::begin(*value));
@@ -229,8 +229,8 @@ private:
             cpp_type* value = reinterpret_cast<cpp_type*>(
                 reinterpret_cast<size_t>(&object) + field_offset);
 
-            // NOTE: if a field mark as autoincremented
-            // then ignore the value
+            // NOTE: if a field mark as an utoincremented
+            // then ignore the value and replace it by NULL
             soci::indicator ind = soci_wrapper::configuration<object_type>::auto_increment()
                                       .contains(val.second)
                 ? i_null

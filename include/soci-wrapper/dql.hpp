@@ -37,7 +37,7 @@ namespace query {
             return std::to_string(i);
         }
 
-        result_type operator()(boost::proto::tag::terminal, const std::string& val) const
+        result_type operator()(boost::proto::tag::terminal, base::type_in<std::string, std::string_view> auto&& val) const
         {
             std::stringstream str;
             str << "'" << val << "'";
@@ -123,18 +123,15 @@ namespace query {
             return boost::proto::eval(expr, context_type {});
         }
 
-        std::string sql_builder(auto&& tag) const
+        std::string sql_builder(base::type_in<all_fields_tag, count_tag> auto&& tag) const
         {
             std::stringstream sql;
-
-            using T = std::decay_t<decltype(tag)>;
-
-            if constexpr (std::is_same_v<T, all_fields_tag>) {
+            if constexpr (base::type_in<decltype(tag), all_fields_tag>) {
                 sql << "SELECT "
                     << base::join(type_meta_data::member_names())
                     << " FROM "
                     << type_meta_data::table_name();
-            } else if constexpr (std::is_same_v<T, count_tag>) {
+            } else if constexpr (base::type_in<decltype(tag), count_tag>) {
                 sql << "SELECT COUNT(*) FROM "
                     << type_meta_data::table_name();
             }

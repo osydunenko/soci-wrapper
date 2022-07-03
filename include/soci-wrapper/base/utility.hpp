@@ -7,6 +7,9 @@
 namespace soci_wrapper {
 namespace base {
 
+    template <typename T, typename... A>
+    concept type_in = (std::same_as<std::remove_cvref_t<T>, A> or ...);
+
     template <class Tuple, class Func, std::size_t... Idxs>
     void tuple_at(std::size_t idx, const Tuple& tuple, Func&& func, std::index_sequence<Idxs...>)
     {
@@ -24,7 +27,7 @@ namespace base {
     }
 
     template <template <class...> class Cont, class T, class... Args>
-    requires std::same_as<std::string_view, T>
+    requires type_in<T, std::string_view>
         std::string join(const Cont<T, Args...>& cont, const std::string& sep = ",")
     {
         return boost::algorithm::join(
@@ -35,7 +38,7 @@ namespace base {
     }
 
     template <template <class...> class Cont, class T, class... Args>
-    requires(not std::same_as<std::string_view, T>)
+    requires(not type_in<T, std::string_view>)
         std::string join(const Cont<T, Args...>& cont, const std::string& sep = ",")
     {
         return boost::algorithm::join(cont, sep);
