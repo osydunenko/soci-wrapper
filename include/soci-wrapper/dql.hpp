@@ -12,10 +12,17 @@
 namespace soci_wrapper {
 namespace query {
 
+    struct query_grammar;
+
+    struct equal : boost::proto::equal_to<placeholder::terminals, literal_terminals> {
+    };
+
+    struct logical_and : boost::proto::logical_and<query_grammar, query_grammar> {
+    };
+
     struct query_grammar : boost::proto::or_<
-                               boost::proto::equal_to<
-                                   placeholder::terminals,
-                                   literal_terminals>> {
+                               equal,
+                               logical_and> {
     };
 
     template <class Type>
@@ -50,6 +57,16 @@ namespace query {
             std::stringstream str;
             str << boost::proto::eval(left, *this)
                 << " = "
+                << boost::proto::eval(right, *this);
+            return str.str();
+        }
+
+        template <class Left, class Right>
+        result_type operator()(boost::proto::tag::logical_and, const Left& left, const Right& right) const
+        {
+            std::stringstream str;
+            str << boost::proto::eval(left, *this)
+                << " AND "
                 << boost::proto::eval(right, *this);
             return str.str();
         }

@@ -83,7 +83,8 @@ BOOST_AUTO_TEST_CASE(tst_data, * utf::depends_on("tst_populate"))
 
     BOOST_TEST(
         (sw::dql::query_from<person>()
-            .where(sw::fields_query<person>::id == 20)
+            .where(sw::fields_query<person>::id == 20 && 
+                sw::fields_query<person>::name == std::string_view{ "name 20" } )
             .object(*session) 
         == prsn)
     );
