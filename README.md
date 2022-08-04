@@ -2,11 +2,15 @@
 
 # Contents
 
-- [Synopsis](#Synopsis)
-- [Features](#Features)
-- [Dependencies](#Dependencies)
-- [Building](#Building)
-- [Usage](#Usage)
+- [Contents](#contents)
+- [Synopsis](#synopsis)
+- [Features](#features)
+- [Dependencies](#dependencies)
+- [Building](#building)
+  - [How To include into cmake](#how-to-include-into-cmake)
+  - [How To make doxygen](#how-to-make-doxygen)
+  - [How To generate the code coverage report](#how-to-generate-the-code-coverage-report)
+- [Usage](#usage)
 
 # Synopsis
 
@@ -25,6 +29,27 @@ interface by implementing a DSL for C++ for working with SQL databases.
     * Boost Proto
 * `gcov`, `lcov`, `genhtml`, `doxygen` are optional and serve the documentation/coverage purposes
 
+Here is the high-level design:
+
+```plantuml
+@startuml
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+Container(customer, Customer)
+
+System_Boundary(c1, "DSL") {
+    Container(wrp, "soci-wrapper", "C++")
+    Container_Ext(dsl, "Boost Proto", "C++")
+}
+Container_Ext(soci, "SOCI C++", "C++")
+ContainerDb(db, "Database")
+Rel_Down(customer, wrp, "Uses")
+Rel_Right(wrp, dsl, "Uses")
+Rel_Down(wrp, soci, "Uses")
+Rel_Right(soci, db, "Reads/Writes")
+@enduml
+```
 
 # Building
 
