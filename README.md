@@ -31,8 +31,9 @@ interface by implementing a DSL for C++ for working with SQL databases.
 
 Here is the high-level design:
 
-```plantuml
-@startuml
+<!--
+```
+@startuml hld
 
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
 
@@ -48,8 +49,12 @@ Rel_Down(customer, wrp, "Uses")
 Rel_Right(wrp, dsl, "Uses")
 Rel_Down(wrp, soci, "Uses")
 Rel_Right(soci, db, "Reads/Writes")
+
 @enduml
 ```
+-->
+
+![](assets/hld.svg)
 
 # Building
 
