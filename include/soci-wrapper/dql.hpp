@@ -108,6 +108,20 @@ namespace query {
             return *this;
         }
 
+        template <class Expr>
+        self_type& conjunction(const Expr& expr)
+        {
+            m_sql_stream << " AND " << eval(expr);
+            return *this;
+        }
+
+        template <class Expr>
+        self_type& disjunction(const Expr& expr)
+        {
+            m_sql_stream << " OR " << eval(expr);
+            return *this;
+        }
+
         template <template <class...> class Cont = std::vector, class... Args>
         Cont<Type, Args...> objects(session::session_type& session)
         {
