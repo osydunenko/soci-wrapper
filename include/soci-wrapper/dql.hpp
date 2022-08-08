@@ -17,11 +17,27 @@ namespace query {
     struct equal : boost::proto::equal_to<placeholder::terminals, literal_terminals> {
     };
 
+    struct greater : boost::proto::greater<placeholder::terminals, literal_terminals> {
+    };
+
+    struct less : boost::proto::less<placeholder::terminals, literal_terminals> {
+    };
+
+    struct greater_equal : boost::proto::greater_equal<placeholder::terminals, literal_terminals> {
+    };
+
+    struct less_equal : boost::proto::less_equal<placeholder::terminals, literal_terminals> {
+    };
+
     struct logical_and : boost::proto::logical_and<query_grammar, query_grammar> {
     };
 
     struct query_grammar : boost::proto::or_<
                                equal,
+                               greater,
+                               less,
+                               greater_equal,
+                               less_equal,
                                logical_and> {
     };
 
@@ -51,24 +67,25 @@ namespace query {
             return str.str();
         }
 
-        template <class Left, class Right>
-        result_type operator()(boost::proto::tag::equal_to, const Left& left, const Right& right) const
+        template <class Op, class Left, class Right>
+        result_type operator()(Op&&, const Left& left, const Right& right) const
         {
             std::stringstream str;
-            str << boost::proto::eval(left, *this)
-                << " = "
-                << boost::proto::eval(right, *this);
-            return str.str();
-        }
-
-        template <class Left, class Right>
-        result_type operator()(boost::proto::tag::logical_and, const Left& left, const Right& right) const
-        {
-            std::stringstream str;
-            str << boost::proto::eval(left, *this)
-                << " AND "
-                << boost::proto::eval(right, *this);
-            return str.str();
+            str << boost::proto::eval(left, *this);
+            if constexpr (std::is_same_v<Op, boost::proto::tag::equal_to>) {
+                str << " = ";
+            } else if constexpr (std::is_same_v<Op, boost::proto::tag::logical_and>) {
+                str << " AND ";
+            } else if constexpr (std::is_same_v<Op, boost::proto::tag::greater>) {
+                str << " > ";
+            } else if constexpr (std::is_same_v<Op, boost::proto::tag::less>) {
+                str << " < ";
+            } else if constexpr (std::is_same_v<Op, boost::proto::tag::greater_equal>) {
+                str << " >= ";
+            } else if constexpr (std::is_same_v<Op, boost::proto::tag::less_equal>) {
+                str << " <= ";
+            }
+            return (str << boost::proto::eval(right, *this), str.str());
         }
     };
 
