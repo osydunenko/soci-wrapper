@@ -14,6 +14,9 @@ namespace query {
 
     struct query_grammar;
 
+    template <class T>
+    concept is_query_grammar = boost::proto::matches<T, query_grammar>::value;
+
     struct equal : boost::proto::equal_to<placeholder::terminals, literal_terminals> {
     };
 
@@ -97,14 +100,40 @@ namespace query {
 
     template <class Type>
     class from {
+    private:
+        struct order_by {
+            enum class expression {
+                ASCENDING = 0,
+                DESCENDING
+            };
+            const expression expr;
+            std::vector<std::string_view> fields;
+
+            std::string_view exprToString() const
+            {
+                static std::array<std::string_view, 2> a { "ASC", "DESC" };
+                return a[static_cast<int>(expr)];
+            }
+
+            template <class... Idx>
+            static order_by create(order_by::expression expr, const Idx&...)
+            {
+                std::array<std::string_view, sizeof...(Idx)> arr {
+                    type_meta_data::member_names()[Idx::proto_args::child0::value]...
+                };
+                return { .expr = expr,
+                    .fields = { std::make_move_iterator(arr.begin()), std::make_move_iterator(arr.end()) } };
+            }
+        };
+
     public:
         using self_type = from<Type>;
 
         using object_type = Type;
 
-        using context_type = query::context<Type>;
+        using query_context_type = query::context<Type>;
 
-        using query_result_type = typename context_type::result_type;
+        using query_result_type = typename query_context_type::result_type;
 
         using type_meta_data = details::type_meta_data<Type>;
 
@@ -115,6 +144,7 @@ namespace query {
 
         from()
             : m_sql_stream {}
+            , m_order_by {}
         {
         }
 
@@ -146,7 +176,6 @@ namespace query {
             return Cont<Type, Args...> { std::make_move_iterator(rs.begin()), std::make_move_iterator(rs.end()) };
         }
 
-        template <class... Args>
         Type object(session::session_type& session)
         {
             Type ret {};
@@ -154,7 +183,6 @@ namespace query {
             return ret;
         }
 
-        template <class... Args>
         int count(session::session_type& session)
         {
             int ret {};
@@ -162,13 +190,26 @@ namespace query {
             return ret;
         }
 
+        template <class... Idx>
+        self_type& orderByDesc(const Idx&... idx)
+        {
+            m_order_by.emplace_back(order_by::create(order_by::expression::DESCENDING, idx...));
+            return *this;
+        }
+
+        template <class... Idx>
+        self_type& orderByAsc(const Idx&... idx)
+        {
+            m_order_by.emplace_back(order_by::create(order_by::expression::ASCENDING, idx...));
+            return *this;
+        }
+
     private:
         template <class Expr>
-        query_result_type eval(const Expr& expr)
+        query_result_type eval(const Expr& expr) const
         {
-            static_assert(boost::proto::matches<Expr, query::query_grammar>::value,
-                "Invalid query grammar");
-            return boost::proto::eval(expr, context_type {});
+            static_assert(is_query_grammar<Expr>, "Invalid query grammar");
+            return boost::proto::eval(expr, query_context_type {});
         }
 
         std::string sql_builder(base::type_in<all_fields_tag, count_tag> auto&& tag) const
@@ -185,10 +226,23 @@ namespace query {
             }
 
             sql << m_sql_stream.str();
+
+            if (m_order_by.size()) {
+                sql << " ORDER BY "
+                    << boost::algorithm::join(
+                           m_order_by | boost::adaptors::transformed([](auto& order) {
+                               std::stringstream str {};
+                               str << base::join(order.fields) << " " << order.exprToString();
+                               return str.str();
+                           }),
+                           ",");
+            }
+
             return sql.str();
         }
 
         std::stringstream m_sql_stream;
+        std::list<order_by> m_order_by;
     };
 
 } // namespace query

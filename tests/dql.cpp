@@ -59,6 +59,29 @@ DECLARE_PERSISTENT_OBJECT(data_types,
 
 sw::session::session_ptr_type session;
 
+BOOST_AUTO_TEST_CASE(tst_order, * utf::depends_on("tst_populate"))
+{
+    std::vector<person> data = sw::dql::query_from<person>()
+        .orderByDesc(sw::fields_query<person>::id)
+        .objects(*session);
+    BOOST_TEST(data.size() == 25);
+
+    for (int idx = 0; idx < 25; ++idx) {
+        BOOST_TEST(data[idx].id == data.size() - 1 - idx);
+    }
+
+    data = sw::dql::query_from<person>()
+        .orderByDesc(sw::fields_query<person>::name)
+        .orderByAsc(sw::fields_query<person>::id)
+        .objects(*session);
+    BOOST_TEST(data.size() == 25);
+    const std::vector<int> vals {9,8,7,6,5,4,3,24,23,22,21,20,2,19,18,17,16,15,14,13,12,11,10,1,0};
+
+    for (int idx = 0; idx < 25; ++idx) {
+        BOOST_TEST(data[idx].id == vals[idx]);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(tst_data, * utf::depends_on("tst_populate"))
 {
     std::vector<person> data = sw::dql::query_from<person>().objects(*session);
