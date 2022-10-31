@@ -145,6 +145,7 @@ namespace query {
         from()
             : m_sql_stream {}
             , m_order_by {}
+            , m_limit { std::nullopt }
         {
         }
 
@@ -204,6 +205,12 @@ namespace query {
             return *this;
         }
 
+        self_type& limit(std::size_t limit, std::size_t offset = 0)
+        {
+            m_limit = std::make_pair(limit, offset);
+            return *this;
+        }
+
     private:
         template <class Expr>
         query_result_type eval(const Expr& expr) const
@@ -238,11 +245,18 @@ namespace query {
                            ",");
             }
 
+            if (m_limit) {
+                sql << " LIMIT " << m_limit->first << " OFFSET " << m_limit->second;
+            }
+
             return sql.str();
         }
 
+        using limit_offset_type = std::pair<std::size_t, std::size_t>;
+
         std::stringstream m_sql_stream;
         std::list<order_by> m_order_by;
+        std::optional<limit_offset_type> m_limit;
     };
 
 } // namespace query

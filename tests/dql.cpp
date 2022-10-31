@@ -59,6 +59,19 @@ DECLARE_PERSISTENT_OBJECT(data_types,
 
 sw::session::session_ptr_type session;
 
+BOOST_AUTO_TEST_CASE(tst_limit_offset, * utf::depends_on("tst_populate"))
+{
+    for (int i = 0; i < 5; ++i) {
+        std::vector<person> data = sw::dql::query_from<person>()
+            .limit(5, i * 5)
+            .objects(*session);
+        BOOST_TEST(data.size() == 5);
+        for (int idx = 0; idx < data.size(); ++idx) {
+            BOOST_TEST(data[idx].id == i * 5 + idx);
+        }
+    }
+}
+
 BOOST_AUTO_TEST_CASE(tst_order, * utf::depends_on("tst_populate"))
 {
     std::vector<person> data = sw::dql::query_from<person>()
