@@ -2,6 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 
 project(soci_wrapper)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Options decl.
 option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
@@ -9,9 +16,10 @@ option(SW_SQLITE3 "Link against sqlite3" OFF)
 
 set(SOCI_EMPTY OFF CACHE BOOL "SOCI Emtpy")
 set(SOCI_TESTS OFF CACHE BOOL "SOCI Tests")
+set(SOCI_STATIC OFF CACHE BOOL "SOCI Off static")
 
 # Check prereqs
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.74.0 REQUIRED COMPONENTS unit_test_framework)
 find_program(GCOV_PATH gcov)
 find_program(LCOV_PATH lcov)
 find_program(GENHTML_PATH genhtml)
@@ -46,6 +54,7 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/soci/include>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/3rdParty/soci/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_link_libraries(
@@ -64,8 +73,19 @@ add_custom_target(
     VERBATIM
 )
 
-# Exclude the doc target from all
+add_custom_target(
+    debug
+    COMMAND ${CMAKE_COMMAND} -DSW_BUILD_TESTS=ON
+        -DSW_SQLITE3=ON
+        -DCMAKE_BUILD_TYPE=Debug
+        ${PROJECT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
+    VERBATIM
+)
+
+# Exclude the doc & debug targets from all
 set_target_properties(doc PROPERTIES EXCLUDE_FROM_ALL TRUE)
+set_target_properties(debug PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Decl. coverage target
 add_custom_target(
@@ -94,15 +114,24 @@ add_custom_target(
 # Exclude the coverage target from all
 set_target_properties(${PROJECT_NAME}_clangformat PROPERTIES EXLCLUDE_FROM_ALL TRUE)
 
-message(STATUS "-------------------------------------------------------")
-message(STATUS "SW_BUILD_TESTS:..............${SW_BUILD_TESTS}")
-message(STATUS "SW_CPPTEST_COVERAGE:.........${SW_CPPTEST_COVERAGE}")
-message(STATUS "CMAKE_BUILD_TYPE:............${CMAKE_BUILD_TYPE}")
-message(STATUS "CMAKE_VERSION:...............${CMAKE_VERSION}")
-message(STATUS "CMAKE_C_COMPILER:............${CMAKE_C_COMPILER}")
-message(STATUS "CMAKE_CXX_COMPILER:..........${CMAKE_CXX_COMPILER}")
-message(STATUS "GCOV_PATH:...................${GCOV_PATH}")
-message(STATUS "LCOV_PATH:...................${LCOV_PATH}")
-message(STATUS "GENHTML_PATH:................${GENHTML_PATH}")
-message(STATUS "DOXYGEN_PATH:................${DOXYGEN_PATH}")
-message(STATUS "-------------------------------------------------------")
+# Installation
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}_Targets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in"
+    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
+
+install(EXPORT ${PROJECT_NAME}_Targets
+    FILE ${PROJECT_NAME}Targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
+
+install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include)
