@@ -12,7 +12,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Options decl.
 option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
-option(SW_SQLITE3 "Link against sqlite3" OFF)
 
 set(SOCI_EMPTY OFF CACHE BOOL "SOCI Emtpy")
 set(SOCI_TESTS OFF CACHE BOOL "SOCI Tests")
@@ -45,7 +44,7 @@ target_compile_definitions(
     ${PROJECT_NAME}
     INTERFACE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<BOOL:${SW_SQLITE3}>:SOCI_WRAPPER_SQLITE>
+        $<$<TARGET_EXISTS:soci_sqlite3>:SOCI_WRAPPER_SQLITE>
 )
 
 target_include_directories(
@@ -61,7 +60,7 @@ target_link_libraries(
     ${PROJECT_NAME}
     INTERFACE
         soci_core
-        $<$<BOOL:${SW_SQLITE3}>:soci_sqlite3>
+        $<$<TARGET_EXISTS:soci_sqlite3>:soci_sqlite3>
 )
 
 # Decl. doc target
@@ -76,7 +75,6 @@ add_custom_target(
 add_custom_target(
     debug
     COMMAND ${CMAKE_COMMAND} -DSW_BUILD_TESTS=ON
-        -DSW_SQLITE3=ON
         -DCMAKE_BUILD_TYPE=Debug
         ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
@@ -115,7 +113,7 @@ add_custom_target(
 set_target_properties(${PROJECT_NAME}_clangformat PROPERTIES EXLCLUDE_FROM_ALL TRUE)
 
 # Installation
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} soci_core
     EXPORT ${PROJECT_NAME}_Targets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
