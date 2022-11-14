@@ -24,6 +24,7 @@ find_program(LCOV_PATH lcov)
 find_program(GENHTML_PATH genhtml)
 find_program(DOXYGEN_PATH doxygen)
 find_program(CLANGFORMAT_PATH clang-format)
+find_package(SQLite3)
 
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
@@ -38,6 +39,14 @@ if(SW_BUILD_TESTS)
 endif()
 
 add_subdirectory(3rdParty/soci)
+
+if (SQLite3_FOUND)
+    target_compile_definitions(
+        ${PROJECT_NAME}
+        INTERFACE
+            SOCI_WRAPPER_SQLITE
+    )
+endif()
 
 # Definitions decl.
 target_compile_definitions(
