@@ -40,20 +40,13 @@ endif()
 
 add_subdirectory(3rdParty/soci)
 
-if (SQLite3_FOUND)
-    target_compile_definitions(
-        ${PROJECT_NAME}
-        INTERFACE
-            SOCI_WRAPPER_SQLITE
-    )
-endif()
-
 # Definitions decl.
 target_compile_definitions(
     ${PROJECT_NAME}
     INTERFACE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<TARGET_EXISTS:soci_sqlite3>:SOCI_WRAPPER_SQLITE>
+	    $<$<BOOL:${SQLite3_FOUND}>:SOCI_WRAPPER_SQLITE>
+	
 )
 
 target_include_directories(
@@ -69,7 +62,7 @@ target_link_libraries(
     ${PROJECT_NAME}
     INTERFACE
         soci_core
-        $<$<TARGET_EXISTS:soci_sqlite3>:soci_sqlite3>
+	    $<$<BOOL:${SQLite3_FOUND}>:soci_sqlite3>
 )
 
 # Decl. doc target
