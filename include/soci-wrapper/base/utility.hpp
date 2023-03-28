@@ -27,8 +27,8 @@ namespace base {
     }
 
     template <template <class...> class Cont, class T, class... Args>
-    requires type_in<T, std::string_view>
-        std::string join(const Cont<T, Args...>& cont, const std::string& sep = ",")
+        requires type_in<T, std::string_view>
+    std::string join(const Cont<T, Args...>& cont, const std::string& sep = ",")
     {
         return boost::algorithm::join(
             cont | boost::adaptors::transformed([](auto v) {
@@ -38,8 +38,8 @@ namespace base {
     }
 
     template <template <class...> class Cont, class T, class... Args>
-    requires(not type_in<T, std::string_view>)
-        std::string join(const Cont<T, Args...>& cont, const std::string& sep = ",")
+        requires(not type_in<T, std::string_view>)
+    std::string join(const Cont<T, Args...>& cont, const std::string& sep = ",")
     {
         return boost::algorithm::join(cont, sep);
     }

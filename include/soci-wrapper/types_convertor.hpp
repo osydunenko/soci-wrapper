@@ -104,25 +104,25 @@ struct cpp_to_db_type<std::string> {
 };
 
 template <class Type, size_t N>
-requires std::same_as<Type, char>
+    requires std::same_as<Type, char>
 struct cpp_to_db_type<Type[N]> {
     static constexpr std::string_view db_type = details::array_to_db_type<details::ARRAYS_TYPE::CHAR, N>::value;
 };
 
 template <class Type, size_t N>
-requires std::same_as<Type, char>
+    requires std::same_as<Type, char>
 struct cpp_to_db_type<std::array<Type, N>> {
     static constexpr std::string_view db_type = details::array_to_db_type<details::ARRAYS_TYPE::CHAR, N>::value;
 };
 
 template <class CPPType>
-requires details::integral<CPPType>
+    requires details::integral<CPPType>
 struct cpp_to_db_type<CPPType> {
     static constexpr std::string_view db_type = "INTEGER";
 };
 
 template <class CPPType>
-requires details::floating_point<CPPType>
+    requires details::floating_point<CPPType>
 struct cpp_to_db_type<CPPType> {
     static constexpr std::string_view db_type = "REAL";
 };
@@ -159,7 +159,8 @@ struct to_ind<std::string> {
 namespace soci {
 
 template <class Type>
-requires soci_wrapper::details::type_meta_data<Type>::is_declared::value struct type_conversion<Type> {
+    requires soci_wrapper::details::type_meta_data<Type>::is_declared::value
+struct type_conversion<Type> {
     using base_type = values;
 
     using object_type = Type;

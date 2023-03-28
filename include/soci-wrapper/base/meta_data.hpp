@@ -61,8 +61,11 @@ namespace details {
     std::make_pair<std::add_pointer_t<decltype(BOOST_PP_TUPLE_ELEM(0, DATA)::BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA))>, std::string>(nullptr, BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA)))
 #define EXPAND_MEMBERS_PAIR_ELEM(TUPLE) BOOST_PP_REPEAT(BOOST_PP_SUB(BOOST_PP_TUPLE_SIZE(TUPLE), 1), EXPAND_MEMBERS_PAIR_ELEM_IDX, TUPLE)
 
-#define EXPAND_MEMBERS_PAIR_OFFSET_IDX(Z, N, DATA) \
-    BOOST_PP_COMMA_IF(N) { BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA)), offsetof(BOOST_PP_TUPLE_ELEM(0, DATA), BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA)) }
+#define EXPAND_MEMBERS_PAIR_OFFSET_IDX(Z, N, DATA)                                                                                                               \
+    BOOST_PP_COMMA_IF(N)                                                                                                                                         \
+    {                                                                                                                                                            \
+        BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA)), offsetof(BOOST_PP_TUPLE_ELEM(0, DATA), BOOST_PP_TUPLE_ELEM(BOOST_PP_ADD(N, 1), DATA)) \
+    }
 #define EXPAND_MEMBERS_PAIR_OFFSET(TUPLE) BOOST_PP_REPEAT(BOOST_PP_SUB(BOOST_PP_TUPLE_SIZE(TUPLE), 1), EXPAND_MEMBERS_PAIR_OFFSET_IDX, TUPLE)
 
 #define EXPAND_DSL_FIELDS_DECL_IDX(Z, N, DATA) static inline const boost::proto::terminal<soci_wrapper::placeholder::query_placeholder<N>>::type BOOST_PP_TUPLE_ELEM(N, DATA) { {} };

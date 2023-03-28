@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(soci_wrapper)
+project(soci_wrapper VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -32,7 +32,6 @@ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
 if(SW_BUILD_TESTS)
-    message(STATUS "Building tests")
     enable_testing()
     set(SOCI_TESTS ON)
     add_subdirectory("${PROJECT_SOURCE_DIR}/tests")
@@ -41,16 +40,14 @@ endif()
 add_subdirectory(3rdParty/soci)
 
 # Definitions decl.
-target_compile_definitions(
-    ${PROJECT_NAME}
+target_compile_definitions(${PROJECT_NAME}
     INTERFACE
         $<$<CONFIG:Debug>:DEBUG>
 	    $<$<BOOL:${SQLite3_FOUND}>:SOCI_WRAPPER_SQLITE>
 	
 )
 
-target_include_directories(
-    ${PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/soci/include>
@@ -58,27 +55,22 @@ target_include_directories(
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_link_libraries(
-    ${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
     INTERFACE
         soci_core
 	    $<$<BOOL:${SQLite3_FOUND}>:soci_sqlite3>
 )
 
 # Decl. doc target
-add_custom_target(
-    doc
+add_custom_target(doc
     COMMAND ${DOXYGEN_PATH} ${PROJECT_SOURCE_DIR}/Doxyfile
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include/soci-wrapper/
-    COMMENT "Generating API Documentation"
+    COMMENT "Generating API Documentation..."
     VERBATIM
 )
 
-add_custom_target(
-    debug
-    COMMAND ${CMAKE_COMMAND} -DSW_BUILD_TESTS=ON
-        -DCMAKE_BUILD_TYPE=Debug
-        ${PROJECT_SOURCE_DIR}
+add_custom_target(debug
+    COMMAND ${CMAKE_COMMAND} -DSW_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
     VERBATIM
 )
@@ -88,8 +80,7 @@ set_target_properties(doc PROPERTIES EXCLUDE_FROM_ALL TRUE)
 set_target_properties(debug PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Decl. coverage target
-add_custom_target(
-    coverage
+add_custom_target(coverage
     rm -f app.info
     COMMAND ${LCOV_PATH} --directory ${PROJECT_BINARY_DIR} --capture --output-file app.info
     COMMAND ${GENHTML_PATH} --output-directory ${PROJECT_SOURCE_DIR}/coverage app.info
@@ -103,8 +94,7 @@ set_target_properties(coverage PROPERTIES EXLCLUDE_FROM_ALL TRUE)
 file(GLOB_RECURSE SRCS ${PROJECT_SOURCE_DIR}/include/*.hpp)
 
 # Decl. clang-format target
-add_custom_target(
-    ${PROJECT_NAME}_clangformat
+add_custom_target(${PROJECT_NAME}_clangformat
     COMMAND ${CLANGFORMAT_PATH} -i -style=WebKit ${SRCS}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include
     COMMENT "Fomatting the code with ${CLANGFORMAT_PATH}"
