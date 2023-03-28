@@ -1,10 +1,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE types
 
-#include <tuple>
+#include "soci-wrapper/types_convertor.hpp"
 #include <array>
 #include <boost/test/unit_test.hpp>
-#include "soci-wrapper/types_convertor.hpp"
+#include <tuple>
 
 using namespace soci_wrapper;
 
@@ -17,8 +17,8 @@ BOOST_AUTO_TEST_CASE(tst_array_of_char_type)
 BOOST_AUTO_TEST_CASE(tst_real_type)
 {
     std::tuple<
-        float, double
-    > types;
+        float, double>
+        types;
 
     base::tuple_for_each(types, [](auto t) {
         BOOST_TEST(cpp_to_db_type<decltype(t)>::db_type == "REAL");
@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE(tst_real_type)
 BOOST_AUTO_TEST_CASE(tst_integral_type)
 {
     std::tuple<
-        long, int, short, char, bool, 
-        unsigned long, unsigned int, unsigned short, unsigned char
-    > types;
+        long, int, short, char, bool,
+        unsigned long, unsigned int, unsigned short, unsigned char>
+        types;
 
     base::tuple_for_each(types, [](auto t) {
         BOOST_TEST(cpp_to_db_type<decltype(t)>::db_type == "INTEGER");

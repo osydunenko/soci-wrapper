@@ -2,7 +2,7 @@
 
 #include "soci/soci.h"
 
-#ifdef SOCI_WRAPPER_SQLITE
+#ifdef SW_SQLITE
 #include "soci/sqlite3/soci-sqlite3.h"
 #endif
 
@@ -19,7 +19,7 @@ struct session {
     {
         session_ptr_type session_ptr = connect();
         session_ptr->open(
-#ifdef SOCI_WRAPPER_SQLITE
+#ifdef SW_SQLITE
             soci::sqlite3,
 #endif
             conn_string);

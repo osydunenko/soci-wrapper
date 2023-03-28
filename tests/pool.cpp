@@ -1,10 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE pool
 
+#include "soci-wrapper.hpp"
+#include <boost/test/unit_test.hpp>
 #include <list>
 
-#include <boost/test/unit_test.hpp>
-#include "soci-wrapper.hpp"
+#if defined(SW_SQLITE)
+constexpr bool sw_sqlite = true;
+#else
+constexpr bool sw_sqlite = false;
+#endif
 
 namespace sw = soci_wrapper;
 namespace utf = boost::unit_test;
@@ -14,8 +19,7 @@ static sessions_pool::ptr_type pool;
 static const size_t conn_size = 8;
 static std::list<sessions_pool::session_proxy> proxies;
 
-struct db_table
-{
+struct db_table {
     int id;
     std::string name;
 } value {
@@ -25,22 +29,22 @@ struct db_table
 
 DECLARE_PERSISTENT_OBJECT(db_table,
     id,
-    name
-);
+    name);
 
-BOOST_AUTO_TEST_CASE(tst_session_ddl_dql, * utf::depends_on("tst_session_proxy"))
+BOOST_AUTO_TEST_CASE(tst_session_ddl_dql, *utf::depends_on("tst_session_proxy"))
 {
     sw::ddl<db_table>::create_table(pool->get_session());
     sw::dml::persist(pool->get_session(), value);
     BOOST_TEST(
         (sw::dql::query_from<db_table>()
-            .where(sw::fields_query<db_table>::id == 1111)
-            .objects(pool->get_session())[0].name == "1111")
-    );
+                .where(sw::fields_query<db_table>::id == 1111)
+                .objects(pool->get_session())[0]
+                .name
+            == "1111"));
     BOOST_TEST(pool->size() == conn_size);
 }
 
-BOOST_AUTO_TEST_CASE(tst_session_proxy, * utf::depends_on("tst_release_sessions"))
+BOOST_AUTO_TEST_CASE(tst_session_proxy, *utf::depends_on("tst_release_sessions"))
 {
     // Create a session
     auto valid = pool->get_session();
@@ -57,7 +61,7 @@ BOOST_AUTO_TEST_CASE(tst_session_proxy, * utf::depends_on("tst_release_sessions"
     BOOST_TEST(pool->size() == conn_size);
 }
 
-BOOST_AUTO_TEST_CASE(tst_release_sessions, * utf::depends_on("tst_empty_pool"))
+BOOST_AUTO_TEST_CASE(tst_release_sessions, *utf::depends_on("tst_empty_pool"))
 {
     // Release all the previously acquired connections
     // from the "proxies" list
@@ -67,22 +71,22 @@ BOOST_AUTO_TEST_CASE(tst_release_sessions, * utf::depends_on("tst_empty_pool"))
     BOOST_TEST(pool->size() == conn_size);
 }
 
-BOOST_AUTO_TEST_CASE(tst_empty_pool, *  utf::depends_on("tst_init_pool"))
+BOOST_AUTO_TEST_CASE(tst_empty_pool, *utf::depends_on("tst_init_pool"))
 {
     BOOST_TEST(pool->size() == 0);
 
     // All the previously acquired connections are valid
-    for (const auto &session : proxies)
+    for (const auto& session : proxies)
         BOOST_TEST(session.is_connected());
 
     // The pool is empty. The next session acquisitions should return an empty
     BOOST_TEST(!pool->get_session().is_connected());
 }
 
-BOOST_AUTO_TEST_CASE(tst_init_pool)
+BOOST_AUTO_TEST_CASE(tst_init_pool, *utf::enable_if<sw_sqlite>())
 {
     pool = sessions_pool::create(conn_size, "tst_object.db");
-    
+
     // Check the number of available connections
     // and those are connected properly in a way by acquiring
     // a connection on each iteration

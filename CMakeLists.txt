@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Options decl.
 option(SW_CPPTEST_COVERAGE "Cpp Test Coverage" OFF)
 option(SW_BUILD_TESTS "Build tests" OFF)
+option(SW_SQLITE "Build for SQLite" OFF)
 
 set(SOCI_EMPTY OFF CACHE BOOL "SOCI Emtpy")
 set(SOCI_TESTS OFF CACHE BOOL "SOCI Tests")
@@ -43,7 +44,7 @@ add_subdirectory(3rdParty/soci)
 target_compile_definitions(${PROJECT_NAME}
     INTERFACE
         $<$<CONFIG:Debug>:DEBUG>
-	    $<$<BOOL:${SQLite3_FOUND}>:SOCI_WRAPPER_SQLITE>
+        $<$<AND:$<BOOL:${SQLite3_FOUND}>,$<BOOL:${SW_SQLITE}>>:SW_SQLITE>
 	
 )
 
@@ -58,7 +59,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     INTERFACE
         soci_core
-	    $<$<BOOL:${SQLite3_FOUND}>:soci_sqlite3>
+	    $<$<AND:$<BOOL:${SQLite3_FOUND}>,$<BOOL:${SW_SQLITE}>>:soci_sqlite3>
 )
 
 # Decl. doc target
@@ -70,7 +71,7 @@ add_custom_target(doc
 )
 
 add_custom_target(debug
-    COMMAND ${CMAKE_COMMAND} -DSW_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -DSW_SQLITE=ON -DSW_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
     VERBATIM
 )
@@ -85,13 +86,13 @@ add_custom_target(coverage
     COMMAND ${LCOV_PATH} --directory ${PROJECT_BINARY_DIR} --capture --output-file app.info
     COMMAND ${GENHTML_PATH} --output-directory ${PROJECT_SOURCE_DIR}/coverage app.info
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Generating Coverage HTML report"
+    COMMENT "Generating Coverage HTML report..."
     VERBATIM
 )
 
 # Exclude the coverage target from all
 set_target_properties(coverage PROPERTIES EXLCLUDE_FROM_ALL TRUE)
-file(GLOB_RECURSE SRCS ${PROJECT_SOURCE_DIR}/include/*.hpp)
+file(GLOB_RECURSE SRCS ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/tests/*.cpp)
 
 # Decl. clang-format target
 add_custom_target(${PROJECT_NAME}_clangformat
