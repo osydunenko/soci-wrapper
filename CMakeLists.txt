@@ -16,7 +16,8 @@ option(SW_SQLITE "Build for SQLite" OFF)
 
 set(SOCI_EMPTY OFF CACHE BOOL "SOCI Emtpy")
 set(SOCI_TESTS OFF CACHE BOOL "SOCI Tests")
-set(SOCI_STATIC OFF CACHE BOOL "SOCI Off static")
+set(SOCI_STATIC OFF CACHE BOOL "SOCI static libraries")
+set(SOCI_SHARED OFF CACHE BOOL "SOCI shared libraries")
 
 # Check prereqs
 find_package(Boost 1.74.0 REQUIRED COMPONENTS unit_test_framework)
@@ -40,35 +41,45 @@ endif()
 
 add_subdirectory(3rdParty/soci)
 
+if (SOCI_STATIC)
+    if (SOCI_SHARED)
+        message(FATAL_ERROR "Cannot have both STATIC and SHARED compilation mode activated simultaneously")
+    endif()
+
+    add_library(soci_core STATIC IMPORTED)
+    set_target_properties(soci_core PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libsoci_core.a")
+
+    if (${SQLite3_FOUND})
+        add_library(soci_sqlite3 STATIC IMPORTED)
+        set_target_properties(soci_sqlite3 PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libsoci_sqlite3.a")
+    endif()
+endif()
+
 # Definitions decl.
 target_compile_definitions(${PROJECT_NAME}
     INTERFACE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<AND:$<BOOL:${SQLite3_FOUND}>,$<BOOL:${SW_SQLITE}>>:SW_SQLITE>
-	
-)
+        $<$<AND:$<BOOL:${SQLite3_FOUND}>,$<BOOL:${SW_SQLITE}>>:SW_SQLITE>)
 
 target_include_directories(${PROJECT_NAME}
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/soci/include>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/3rdParty/soci/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_link_libraries(${PROJECT_NAME}
     INTERFACE
+	    $<$<BOOL:${SW_SQLITE}>:soci_sqlite3>
         soci_core
-	    $<$<AND:$<BOOL:${SQLite3_FOUND}>,$<BOOL:${SW_SQLITE}>>:soci_sqlite3>
-)
+        $<$<AND:$<BOOL:${SOCI_STATIC}>,$<BOOL:${SW_SQLITE}>>:SQLite::SQLite3>)
 
 # Decl. doc target
 add_custom_target(doc
     COMMAND ${DOXYGEN_PATH} ${PROJECT_SOURCE_DIR}/Doxyfile
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include/soci-wrapper/
     COMMENT "Generating API Documentation..."
-    VERBATIM
-)
+    VERBATIM)
 
 add_custom_target(debug
     COMMAND ${CMAKE_COMMAND} -DSW_SQLITE=ON -DSW_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR}
@@ -87,8 +98,7 @@ add_custom_target(coverage
     COMMAND ${GENHTML_PATH} --output-directory ${PROJECT_SOURCE_DIR}/coverage app.info
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Generating Coverage HTML report..."
-    VERBATIM
-)
+    VERBATIM)
 
 # Exclude the coverage target from all
 set_target_properties(coverage PROPERTIES EXLCLUDE_FROM_ALL TRUE)
@@ -99,14 +109,13 @@ add_custom_target(${PROJECT_NAME}_clangformat
     COMMAND ${CLANGFORMAT_PATH} -i -style=WebKit ${SRCS}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include
     COMMENT "Fomatting the code with ${CLANGFORMAT_PATH}"
-    VERBATIM
-)
+    VERBATIM)
 
 # Exclude the coverage target from all
 set_target_properties(${PROJECT_NAME}_clangformat PROPERTIES EXLCLUDE_FROM_ALL TRUE)
 
 # Installation
-install(TARGETS ${PROJECT_NAME} soci_core
+install(TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}_Targets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

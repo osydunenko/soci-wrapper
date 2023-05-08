@@ -22,31 +22,26 @@ foreach(tst_src ${TST_SRCS})
     target_compile_options(
         tst_${tst_name}
         PRIVATE
-            "${COVERAGE_OPTIONS}"
-    )
+            "${COVERAGE_OPTIONS}")
 
     target_link_options(
         tst_${tst_name}
         PRIVATE
-            "${COVERAGE_LINK_OPTIONS}"
-    )
+            "${COVERAGE_LINK_OPTIONS}")
 
     target_link_libraries(
         tst_${tst_name}
         PRIVATE
             soci_wrapper::soci_wrapper
-            Boost::unit_test_framework
-    )
+            Boost::unit_test_framework)
 
     set_target_properties(
         tst_${tst_name} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin/
-    )
+        RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin/)
 
     add_test(
         NAME tst_${tst_name}
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/bin/
-        COMMAND ${PROJECT_BINARY_DIR}/bin/tst_${tst_name}
-    )
+        COMMAND ${PROJECT_BINARY_DIR}/bin/tst_${tst_name})
 endforeach()
 

@@ -6,6 +6,7 @@ ENV LD_LIBRARY_PATH=/usr/local/lib/
 RUN apt-get -qq update -y \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
+        ca-certificates \
         g++ \
         clang-format \
         doxygen \
