@@ -41,18 +41,8 @@ endif()
 
 add_subdirectory(3rdParty/soci)
 
-if (SOCI_STATIC)
-    if (SOCI_SHARED)
-        message(FATAL_ERROR "Cannot have both STATIC and SHARED compilation mode activated simultaneously")
-    endif()
-
-    add_library(soci_core STATIC IMPORTED)
-    set_target_properties(soci_core PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libsoci_core.a")
-
-    if (${SQLite3_FOUND})
-        add_library(soci_sqlite3 STATIC IMPORTED)
-        set_target_properties(soci_sqlite3 PROPERTIES IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libsoci_sqlite3.a")
-    endif()
+if (SOCI_STATIC AND SOCI_SHARED)
+    message(FATAL_ERROR "Cannot have both STATIC and SHARED compilation mode activated simultaneously")
 endif()
 
 # Definitions decl.
@@ -70,9 +60,10 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     INTERFACE
-	    $<$<BOOL:${SW_SQLITE}>:soci_sqlite3>
-        soci_core
-        $<$<AND:$<BOOL:${SOCI_STATIC}>,$<BOOL:${SW_SQLITE}>>:SQLite::SQLite3>)
+        $<$<AND:$<BOOL:${SOCI_STATIC}>,$<BOOL:${SW_SQLITE}>>:Soci::sqlite3_static>
+        $<$<AND:$<BOOL:${SOCI_SHARED}>,$<BOOL:${SW_SQLITE}>>:Soci::sqlite3>
+        $<$<BOOL:${SOCI_STATIC}>:Soci::core_static>
+        $<$<BOOL:${SOCI_SHARED}>:Soci::core>)
 
 # Decl. doc target
 add_custom_target(doc
