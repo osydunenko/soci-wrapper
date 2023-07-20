@@ -61,9 +61,9 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     INTERFACE
         $<$<AND:$<BOOL:${SOCI_STATIC}>,$<BOOL:${SW_SQLITE}>>:Soci::sqlite3_static>
-        $<$<AND:$<BOOL:${SOCI_SHARED}>,$<BOOL:${SW_SQLITE}>>:soci_sqlite3>
+        $<$<AND:$<BOOL:${SOCI_SHARED}>,$<BOOL:${SW_SQLITE}>>:Soci::sqlite3>
         $<$<BOOL:${SOCI_STATIC}>:Soci::core_static>
-        $<$<BOOL:${SOCI_SHARED}>:soci_core>)
+        $<$<BOOL:${SOCI_SHARED}>:Soci::core>)
 
 # Decl. doc target
 add_custom_target(${PROJECT_NAME}_doc
