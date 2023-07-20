@@ -61,29 +61,29 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     INTERFACE
         $<$<AND:$<BOOL:${SOCI_STATIC}>,$<BOOL:${SW_SQLITE}>>:Soci::sqlite3_static>
-        $<$<AND:$<BOOL:${SOCI_SHARED}>,$<BOOL:${SW_SQLITE}>>:Soci::sqlite3>
+        $<$<AND:$<BOOL:${SOCI_SHARED}>,$<BOOL:${SW_SQLITE}>>:soci_sqlite3>
         $<$<BOOL:${SOCI_STATIC}>:Soci::core_static>
-        $<$<BOOL:${SOCI_SHARED}>:Soci::core>)
+        $<$<BOOL:${SOCI_SHARED}>:soci_core>)
 
 # Decl. doc target
-add_custom_target(doc
+add_custom_target(${PROJECT_NAME}_doc
     COMMAND ${DOXYGEN_PATH} ${PROJECT_SOURCE_DIR}/Doxyfile
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/include/soci-wrapper/
     COMMENT "Generating API Documentation..."
     VERBATIM)
 
-add_custom_target(debug
+add_custom_target(${PROJECT_NAME}_debug
     COMMAND ${CMAKE_COMMAND} -DSW_SQLITE=ON -DSW_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}
     VERBATIM
 )
 
 # Exclude the doc & debug targets from all
-set_target_properties(doc PROPERTIES EXCLUDE_FROM_ALL TRUE)
-set_target_properties(debug PROPERTIES EXCLUDE_FROM_ALL TRUE)
+set_target_properties(${PROJECT_NAME}_doc PROPERTIES EXCLUDE_FROM_ALL TRUE)
+set_target_properties(${PROJECT_NAME}_debug PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 # Decl. coverage target
-add_custom_target(coverage
+add_custom_target(${PROJECT_NAME}_coverage
     rm -f app.info
     COMMAND ${LCOV_PATH} --directory ${PROJECT_BINARY_DIR} --capture --output-file app.info
     COMMAND ${GENHTML_PATH} --output-directory ${PROJECT_SOURCE_DIR}/coverage app.info
@@ -92,7 +92,7 @@ add_custom_target(coverage
     VERBATIM)
 
 # Exclude the coverage target from all
-set_target_properties(coverage PROPERTIES EXLCLUDE_FROM_ALL TRUE)
+set_target_properties(${PROJECT_NAME}_coverage PROPERTIES EXLCLUDE_FROM_ALL TRUE)
 file(GLOB_RECURSE SRCS ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/tests/*.cpp)
 
 # Decl. clang-format target
