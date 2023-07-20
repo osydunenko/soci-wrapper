@@ -7,6 +7,7 @@
 - [Features](#features)
 - [Dependencies](#dependencies)
 - [Building](#building)
+  - [How To build container and execute tests](#how-to-build-container-and-execute-tests)
   - [How To include into cmake](#how-to-include-into-cmake)
   - [How To make doxygen](#how-to-make-doxygen)
   - [How To generate the code coverage report](#how-to-generate-the-code-coverage-report)
@@ -62,6 +63,25 @@ Rel_Right(soci, db, "Reads/Writes")
 following: 
 ```cpp
 #include "soci-wrapper.hpp"
+```
+
+## How To build container and execute tests
+
+There is a script added to serve the purpose. The `run.sh` script is located in the root folder of the project. The following options are availavle:
+- `clear` - cleans the build directory
+- `compile_container` - compiles the docker container w/ the tag `soci_wrapper`
+- `compile_debug` - compiles the library in Debug mode with the tests
+
+For the full chain execution from the scratch just invoke the following command:
+```sh
+./run.sh --clear --compile_container --compile_debug 
+
+Usage: run.sh [options]
+
+Options:
+    --clear                          Clear build dir
+    --compile_container              Compile the docker container
+    --compile_debug                  Compile in debug mode w/ tests
 ```
 
 ## How To include into cmake
@@ -178,7 +198,7 @@ sw::ddl<person>::create_table(*session);
 Insertion-Querying into DB and map the data then to C++ structure
 
 ```cpp
-person prsn{
+person prsn {
     .id = 20,
     .name = "name 20",
     .surname = "surname 20"
